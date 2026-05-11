@@ -450,6 +450,58 @@
       font-size: 0.9rem;
     }
 
+    .group-toggle {
+      color: var(--muted);
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+
+    details.group > summary .group-toggle::before,
+    details.subgroup > summary .group-toggle::before {
+      content: "Expand";
+    }
+
+    details.group[open] > summary .group-toggle::before,
+    details.subgroup[open] > summary .group-toggle::before {
+      content: "Collapse";
+    }
+
+    .subgroup {
+      border-top: 1px solid var(--border);
+      background: #fcfdff;
+    }
+
+    .subgroup summary {
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 12px 18px;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .subgroup summary::-webkit-details-marker { display: none; }
+
+    .subgroup-name {
+      font-weight: 760;
+      font-size: 0.96rem;
+    }
+
+    .tag-editor {
+      display: grid;
+      gap: 8px;
+      min-width: 220px;
+    }
+
+    .tag-editor input {
+      min-width: 140px;
+      padding: 8px 10px;
+      border-radius: 10px;
+    }
+
     .table-wrap { overflow: auto; }
 
     table {
@@ -1547,6 +1599,21 @@
         if (!groups.has(name)) groups.set(name, { name, entries: [] });
         groups.get(name).entries.push(pair);
       });
+      return Array.from(groups.values())
+        .map(group => ({
+          ...group,
+          timecodes: groupEntriesByTimecode(group.entries)
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    function groupEntriesByTimecode(entries) {
+      const groups = new Map();
+      entries.forEach(pair => {
+        const name = normalize(pair.entry["Timecode Name"]) || "No timecode";
+        if (!groups.has(name)) groups.set(name, { name, entries: [] });
+        groups.get(name).entries.push(pair);
+      });
       return Array.from(groups.values()).sort((a, b) => a.name.localeCompare(b.name));
     }
 
@@ -1564,11 +1631,6 @@
 
       const groups = groupPairs(pairs);
       container.innerHTML = groups.map(group => {
-        const rows = group.entries
-          .sort((a, b) => compareEntryDate(a.entry, b.entry) || String(a.entry.Comment || "").localeCompare(String(b.entry.Comment || "")))
-          .map(pair => renderEntryRow(pair.entry, pair.assignment, options.source))
-          .join("");
-
         const reviewHeaders = `
           <th>Date</th>
           <th>Project</th>
@@ -1587,23 +1649,42 @@
           <th>Assigned by</th>
           <th>Source CSV</th>
         `;
+        const subgroups = group.timecodes.map(timecodeGroup => {
+          const rows = timecodeGroup.entries
+            .sort((a, b) => compareEntryDate(a.entry, b.entry) || String(a.entry.Comment || "").localeCompare(String(b.entry.Comment || "")))
+            .map(pair => renderEntryRow(pair.entry, pair.assignment, options.source))
+            .join("");
+          return `
+            <details class="subgroup" open>
+              <summary>
+                <span>
+                  <span class="subgroup-name">${escapeHtml(timecodeGroup.name)}</span><br>
+                  <span class="group-meta">${timecodeGroup.entries.length} row${timecodeGroup.entries.length === 1 ? "" : "s"}</span>
+                </span>
+                <span class="group-toggle" aria-hidden="true"></span>
+              </summary>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>${options.source === "review" ? reviewHeaders : historicHeaders}</tr>
+                  </thead>
+                  <tbody>${rows}</tbody>
+                </table>
+              </div>
+            </details>
+          `;
+        }).join("");
+
         return `
           <details class="group" open>
             <summary>
               <span>
                 <span class="group-name">${escapeHtml(group.name)}</span><br>
-                <span class="group-meta">${group.entries.length} row${group.entries.length === 1 ? "" : "s"}</span>
+                <span class="group-meta">${group.entries.length} row${group.entries.length === 1 ? "" : "s"} across ${group.timecodes.length} timecode${group.timecodes.length === 1 ? "" : "s"}</span>
               </span>
-              <span class="group-meta">Open</span>
+              <span class="group-toggle" aria-hidden="true"></span>
             </summary>
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>${options.source === "review" ? reviewHeaders : historicHeaders}</tr>
-                </thead>
-                <tbody>${rows}</tbody>
-              </table>
-            </div>
+            ${subgroups}
           </details>
         `;
       }).join("");
@@ -1616,13 +1697,21 @@
         : `<span class="muted">None</span>`;
 
       if (source === "review") {
+        const localTag = entry.__localTag || "";
+        const suggestionsHtml = renderSuggestionCell(entry);
         return `
           <tr>
             <td>${escapeHtml(entry.Date || "")}</td>
             <td class="project">${escapeHtml(entry["Project Name"] || "")}</td>
             <td class="timecode">${escapeHtml(entry["Timecode Name"] || "")}</td>
             <td class="comment">${linkifyTags(escapeHtml(entry.Comment || ""))}</td>
-            <td class="tag-cell">${tagsHtml}</td>
+            <td class="tag-cell">
+              <div class="tag-editor">
+                <div>${tagsHtml}</div>
+                <input data-local-tag="true" data-entry-id="${escapeAttr(entry.__id)}" list="tagOptions" type="text" value="${escapeAttr(localTag)}" placeholder="Add optional tag" />
+                ${suggestionsHtml}
+              </div>
+            </td>
           </tr>
         `;
       }
