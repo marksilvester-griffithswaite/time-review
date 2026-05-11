@@ -1546,7 +1546,8 @@
       return Array.from(groups.values())
         .map(group => ({
           ...group,
-          timecodes: groupEntriesByTimecode(group.entries)
+          timecodes: groupEntriesByTimecode(group.entries),
+          totalHours: sumEntryHours(group.entries)
         }))
         .sort((a, b) => a.name.localeCompare(b.name));
     }
@@ -1558,7 +1559,35 @@
         if (!groups.has(name)) groups.set(name, { name, entries: [] });
         groups.get(name).entries.push(pair);
       });
-      return Array.from(groups.values()).sort((a, b) => a.name.localeCompare(b.name));
+      return Array.from(groups.values())
+        .map(group => ({
+          ...group,
+          totalHours: sumEntryHours(group.entries)
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    function getEntryHours(entry) {
+      const workedHours = Number.parseFloat(String(entry["Worked Hours"] || "").trim());
+      if (Number.isFinite(workedHours)) return workedHours;
+
+      const workedTime = String(entry["Worked Time"] || "").trim();
+      const match = workedTime.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+      if (!match) return 0;
+
+      const hours = Number(match[1] || 0);
+      const minutes = Number(match[2] || 0);
+      const seconds = Number(match[3] || 0);
+      return hours + (minutes / 60) + (seconds / 3600);
+    }
+
+    function sumEntryHours(pairs) {
+      return pairs.reduce((total, pair) => total + getEntryHours(pair.entry), 0);
+    }
+
+    function formatHours(totalHours) {
+      const rounded = Math.round(totalHours * 100) / 100;
+      return Number.isInteger(rounded) ? String(rounded) : String(rounded).replace(/(\.\d*?[1-9])0+$/, "$1");
     }
 
     function renderGroups(container, pairs, options) {
@@ -1605,7 +1634,7 @@
               <summary>
                 <span>
                   <span class="subgroup-name">${escapeHtml(timecodeGroup.name)}</span><br>
-                  <span class="group-meta">${timecodeGroup.entries.length} row${timecodeGroup.entries.length === 1 ? "" : "s"}</span>
+                  <span class="group-meta">${timecodeGroup.entries.length} row${timecodeGroup.entries.length === 1 ? "" : "s"} · ${formatHours(timecodeGroup.totalHours)} hours</span>
                 </span>
                 <span class="group-toggle" aria-hidden="true"></span>
               </summary>
@@ -1626,7 +1655,7 @@
             <summary>
               <span>
                 <span class="group-name">${escapeHtml(group.name)}</span><br>
-                <span class="group-meta">${group.entries.length} row${group.entries.length === 1 ? "" : "s"} across ${group.timecodes.length} timecode${group.timecodes.length === 1 ? "" : "s"}</span>
+                <span class="group-meta">${group.entries.length} row${group.entries.length === 1 ? "" : "s"} · ${formatHours(group.totalHours)} hours across ${group.timecodes.length} timecode${group.timecodes.length === 1 ? "" : "s"}</span>
               </span>
               <span class="group-toggle" aria-hidden="true"></span>
             </summary>
