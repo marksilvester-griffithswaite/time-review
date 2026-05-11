@@ -35,28 +35,10 @@
       line-height: 1.45;
     }
 
-    header {
-      background: linear-gradient(135deg, #0f172a, #1f2937);
-      color: white;
-      padding: 30px 24px;
-    }
-
-    header h1 {
-      margin: 0 0 8px;
-      font-size: clamp(1.9rem, 4vw, 3rem);
-      letter-spacing: -0.045em;
-    }
-
-    header p {
-      max-width: 1040px;
-      margin: 0;
-      color: #d1d5db;
-    }
-
     main {
       width: min(1580px, 100%);
       margin: 0 auto;
-      padding: 22px;
+      padding: 16px 22px 22px;
     }
 
     h2, h3 {
@@ -146,36 +128,39 @@
     .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 
     .step-switcher {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
-      margin-bottom: 18px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
     }
 
     .step-button {
       text-align: left;
       color: var(--text);
       background: white;
-      border: 2px solid var(--border);
-      box-shadow: var(--shadow);
-      padding: 18px;
-      display: grid;
-      gap: 6px;
-      min-height: 126px;
+      border: 1px solid var(--border);
+      box-shadow: none;
+      padding: 10px 14px;
+      display: inline-flex;
+      gap: 8px;
+      min-height: 0;
+      align-items: center;
     }
 
     .step-button:hover { background: white; border-color: var(--border-strong); }
 
     .step-button strong {
-      display: flex;
+      display: inline-flex;
       gap: 8px;
       align-items: center;
-      font-size: 1.16rem;
+      font-size: 0.98rem;
     }
 
-    .step-button span {
+    .step-button span:not(.badge) {
       color: var(--muted);
       font-weight: 500;
+      font-size: 0.92rem;
     }
 
     .step-button.active[data-view-target="review"] {
@@ -208,47 +193,6 @@
     .view-panel { display: none; gap: 16px; }
     .view-panel.active { display: grid; }
 
-    .view-banner {
-      border-radius: 20px;
-      padding: 18px;
-      border: 2px solid;
-      display: grid;
-      gap: 6px;
-    }
-
-    .view-banner.review {
-      background: var(--review-bg);
-      border-color: #fdba74;
-    }
-
-    .view-banner.historic {
-      background: var(--historic-bg);
-      border-color: #86efac;
-    }
-
-    .view-banner h2 {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      margin: 0;
-    }
-
-    .section-label {
-      display: inline-flex;
-      width: fit-content;
-      align-items: center;
-      gap: 7px;
-      border-radius: 999px;
-      padding: 5px 10px;
-      font-size: 0.82rem;
-      font-weight: 850;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-
-    .section-label.review { background: #fed7aa; color: #7c2d12; }
-    .section-label.historic { background: #bbf7d0; color: #065f46; }
-
     .notice {
       border-radius: 14px;
       padding: 12px;
@@ -278,7 +222,7 @@
     }
 
     @media (max-width: 1050px) {
-      .two-column, .step-switcher { grid-template-columns: 1fr; }
+      .two-column { grid-template-columns: 1fr; }
     }
 
     .side-panel {
@@ -296,8 +240,42 @@
       gap: 10px;
     }
 
+    .toolbar {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .toolbar-grid {
+      display: grid;
+      grid-template-columns: minmax(240px, 340px) minmax(0, 1fr);
+      gap: 14px;
+      align-items: start;
+    }
+
+    .action-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .optional-panel summary {
+      cursor: pointer;
+      font-weight: 800;
+      color: var(--text);
+      list-style: none;
+    }
+
+    .optional-panel summary::-webkit-details-marker { display: none; }
+
+    .optional-panel[open] summary {
+      margin-bottom: 12px;
+    }
+
     @media (max-width: 760px) {
       .button-grid { grid-template-columns: 1fr; }
+      .toolbar-grid { grid-template-columns: 1fr; }
     }
 
     .summary-grid {
@@ -549,108 +527,79 @@
   </style>
 </head>
 <body>
-  <header>
-    <h1>Time Recording Assessor</h1>
-    <p>Step 1 reviews one time recording CSV and exports a reviewed CSV. Step 2 loads historic reviewed CSVs from the folder you choose on your laptop.</p>
-  </header>
-
   <main>
     <section class="step-switcher" aria-label="App steps">
       <button class="step-button active" data-view-target="review" type="button">
-        <strong>Step 1: Review and export CSV <span id="reviewBadge" class="badge review">0</span></strong>
-        <span>Work on the current CSV only. It does not become historic until you export the reviewed CSV.</span>
+        <strong>Current review <span id="reviewBadge" class="badge review">0</span></strong>
       </button>
       <button class="step-button" data-view-target="historic" type="button">
-        <strong>Step 2: Review historic CSVs <span id="historicBadge" class="badge historic">0</span></strong>
-        <span>Read previously reviewed CSVs from a folder you define on your laptop.</span>
+        <strong>Historic review <span id="historicBadge" class="badge historic">0</span></strong>
       </button>
     </section>
 
     <section id="reviewView" class="view-panel active" aria-labelledby="reviewTitle">
-      <div class="view-banner review">
-        <span class="section-label review">Current CSV only</span>
-        <h2 id="reviewTitle">Review a time recording CSV, then export it</h2>
-        <p class="muted">This step is deliberately separate from historic review. The rows below are a temporary review area until you export them as a reviewed CSV.</p>
-      </div>
-
-      <div class="two-column">
-        <aside class="side-panel stack">
-          <section class="card stack">
+      <section class="card toolbar" aria-labelledby="reviewTitle">
+        <div class="toolbar-grid">
+          <div class="stack">
             <div>
-              <h2>Import time CSV</h2>
-              <p class="muted">The app checks the file against historic CSVs already loaded from your folder, then only shows new rows for review.</p>
+              <h2 id="reviewTitle">Current review</h2>
+              <p id="currentReviewLabel" class="muted">No CSV is currently being reviewed.</p>
             </div>
             <label>
               CSV file
               <input id="csvFile" type="file" accept=".csv,text/csv" />
             </label>
-            <div class="button-grid">
+            <div class="action-row">
               <button id="importBtn" type="button">Assess CSV</button>
+              <button id="exportReviewBtn" type="button">Download reviewed CSV</button>
+              <button id="exportReviewToFolderBtn" class="secondary" type="button">Export to historic folder</button>
               <button id="clearReviewBtn" class="secondary" type="button">Clear current review</button>
             </div>
+          </div>
+          <div class="stack">
+            <div class="summary-grid">
+              <div class="mini-stat"><strong id="pendingCount">0</strong><span>rows to review</span></div>
+              <div class="mini-stat"><strong id="skippedHistoricCount">0</strong><span>already in history</span></div>
+              <div class="mini-stat"><strong id="skippedFileCount">0</strong><span>duplicates in file</span></div>
+              <div class="mini-stat"><strong id="suggestionCount">0</strong><span>optional tag suggestions</span></div>
+            </div>
             <div id="reviewNotice" class="notice hidden"></div>
-          </section>
+          </div>
+        </div>
+      </section>
 
-          <section class="card stack">
-            <div>
-              <h2>Optional tag overrides</h2>
-              <p class="muted">Only add a tag when the original project name and timecode do not describe the work clearly enough. A mapped tag can override the exported grouping, and these rules are saved to the shared rules file when the historic folder is connected.</p>
-            </div>
-            <label>
-              Tag
-              <input id="ruleTag" type="text" list="tagOptions" placeholder="#tag" />
-            </label>
-            <label>
-              Assign to project or group
-              <input id="ruleTarget" type="text" list="projectOptions" placeholder="Project or review group" />
-            </label>
-            <button id="addRuleBtn" type="button">Save tag rule</button>
-            <datalist id="tagOptions"></datalist>
-            <datalist id="projectOptions"></datalist>
-            <div id="ruleList" class="rule-list"></div>
-          </section>
-
-          <section class="card stack">
-            <div>
-              <h2>Optional tag suggestions</h2>
-              <p class="muted">Most entries do not need a tag. When you do add one, the app can learn a Project + Timecode suggestion for future reviews and store it in <span class="mono">time-recording-assessor-rules.json</span>.</p>
-            </div>
-            <div id="rulesFileStatus" class="notice warn">Rules file not loaded yet.</div>
-            <div class="button-grid">
-              <button id="applySuggestionsBtn" class="secondary" type="button">Apply visible tag suggestions</button>
-              <button id="saveRulesToFolderBtn" class="secondary" type="button">Save rules to folder</button>
-              <button id="clearSuggestionRulesBtn" class="danger" type="button">Clear suggestion rules</button>
-            </div>
-            <div id="suggestionRuleList" class="rule-list"></div>
-          </section>
-
-          <section class="card stack">
-            <div>
-              <h2>Export reviewed CSV</h2>
-              <p class="muted">This is the end of Step 1. Save the reviewed CSV into the folder you use for historic review.</p>
-            </div>
-            <button id="exportReviewBtn" type="button">Download reviewed CSV</button>
-            <button id="exportReviewToFolderBtn" class="secondary" type="button">Export reviewed CSV to historic folder</button>
+      <div class="two-column">
+        <aside class="side-panel stack">
+          <section class="card">
+            <details class="optional-panel">
+              <summary>Optional tag settings</summary>
+              <div class="stack">
+                <p class="muted">Most entries will not need a tag. Use these settings only when you want to reuse a tag mapping or saved suggestion later.</p>
+                <label>
+                  Tag
+                  <input id="ruleTag" type="text" list="tagOptions" placeholder="#tag" />
+                </label>
+                <label>
+                  Assign to project or group
+                  <input id="ruleTarget" type="text" list="projectOptions" placeholder="Project or review group" />
+                </label>
+                <button id="addRuleBtn" type="button">Save tag rule</button>
+                <datalist id="tagOptions"></datalist>
+                <datalist id="projectOptions"></datalist>
+                <div id="ruleList" class="rule-list"></div>
+                <div id="rulesFileStatus" class="notice warn">Rules file not loaded yet.</div>
+                <div class="button-grid">
+                  <button id="applySuggestionsBtn" class="secondary" type="button">Apply visible tag suggestions</button>
+                  <button id="saveRulesToFolderBtn" class="secondary" type="button">Save rules to folder</button>
+                  <button id="clearSuggestionRulesBtn" class="danger" type="button">Clear suggestion rules</button>
+                </div>
+                <div id="suggestionRuleList" class="rule-list"></div>
+              </div>
+            </details>
           </section>
         </aside>
 
         <section class="stack">
-          <section class="card stack">
-            <div class="row between">
-              <div>
-                <h2>Current review status</h2>
-                <p id="currentReviewLabel" class="muted">No CSV is currently being reviewed.</p>
-              </div>
-              <span class="status-pill review">Temporary review area</span>
-            </div>
-            <div class="summary-grid">
-              <div class="mini-stat"><strong id="pendingCount">0</strong><span>new rows waiting for review</span></div>
-              <div class="mini-stat"><strong id="skippedHistoricCount">0</strong><span>already in loaded historic CSVs</span></div>
-              <div class="mini-stat"><strong id="skippedFileCount">0</strong><span>repeated inside CSV</span></div>
-              <div class="mini-stat"><strong id="suggestionCount">0</strong><span>optional tag suggestions</span></div>
-            </div>
-          </section>
-
           <section class="card">
             <div class="row between">
               <div>
@@ -680,12 +629,6 @@
     </section>
 
     <section id="historicView" class="view-panel" aria-labelledby="historicTitle">
-      <div class="view-banner historic">
-        <span class="section-label historic">Reviewed CSV folder only</span>
-        <h2 id="historicTitle">Review historic time recording</h2>
-        <p class="muted">Historic data is read from reviewed CSVs in your chosen folder. The current import review does not feed this view directly.</p>
-      </div>
-
       <div class="two-column">
         <aside class="side-panel stack">
           <section class="card stack">
@@ -1745,7 +1688,7 @@
     function renderSuggestionCell(entry) {
       const suggestions = getSuggestedTagsToApply(entry);
       const allSuggestions = getSuggestedTags(entry);
-      if (!allSuggestions.length) return `<span class="muted">None</span>`;
+      if (!allSuggestions.length) return "";
       if (!suggestions.length) return `<span class="status-pill stored">Already applied</span>`;
       return `<div class="suggestion-list">${suggestions.map(tag => `
         <span class="suggestion-chip">
