@@ -540,8 +540,8 @@
 
           <section class="card stack">
             <div>
-              <h2>Tag rules</h2>
-              <p class="muted">A mapped tag overrides the original project when exporting the reviewed CSV. These rules are saved to the historic CSV folder rules file when the folder is connected.</p>
+              <h2>Optional tag overrides</h2>
+              <p class="muted">Only add a tag when the original project name and timecode do not describe the work clearly enough. A mapped tag can override the exported grouping, and these rules are saved to the shared rules file when the historic folder is connected.</p>
             </div>
             <label>
               Tag
@@ -559,12 +559,12 @@
 
           <section class="card stack">
             <div>
-              <h2>Saved tag suggestions</h2>
-              <p class="muted">When you export reviewed rows, the app learns Project + Timecode to Tag suggestions for future CSV reviews. The rules are stored in the historic CSV folder as <span class="mono">time-recording-assessor-rules.json</span>.</p>
+              <h2>Optional tag suggestions</h2>
+              <p class="muted">Most entries do not need a tag. When you do add one, the app can learn a Project + Timecode suggestion for future reviews and store it in <span class="mono">time-recording-assessor-rules.json</span>.</p>
             </div>
             <div id="rulesFileStatus" class="notice warn">Rules file not loaded yet.</div>
             <div class="button-grid">
-              <button id="applySuggestionsBtn" class="secondary" type="button">Apply visible suggestions</button>
+              <button id="applySuggestionsBtn" class="secondary" type="button">Apply visible tag suggestions</button>
               <button id="saveRulesToFolderBtn" class="secondary" type="button">Save rules to folder</button>
               <button id="clearSuggestionRulesBtn" class="danger" type="button">Clear suggestion rules</button>
             </div>
@@ -594,7 +594,7 @@
               <div class="mini-stat"><strong id="pendingCount">0</strong><span>new rows waiting for review</span></div>
               <div class="mini-stat"><strong id="skippedHistoricCount">0</strong><span>already in loaded historic CSVs</span></div>
               <div class="mini-stat"><strong id="skippedFileCount">0</strong><span>repeated inside CSV</span></div>
-              <div class="mini-stat"><strong id="suggestionCount">0</strong><span>tag suggestions available</span></div>
+              <div class="mini-stat"><strong id="suggestionCount">0</strong><span>optional tag suggestions</span></div>
             </div>
           </section>
 
@@ -602,7 +602,7 @@
             <div class="row between">
               <div>
                 <h2>Review filters</h2>
-                <p class="muted">Focused on project, timecode, comment and tags.</p>
+                <p class="muted">Project, timecode and comment are the main review fields. Tags are optional extras.</p>
               </div>
             </div>
             <div class="filters">
@@ -638,7 +638,7 @@
           <section class="card stack">
             <div>
               <h2>Historic CSV folder</h2>
-              <p class="muted">Choose the folder on your laptop where you store exported reviewed CSVs and the shared rules file. Chrome and Edge can usually remember this permission.</p>
+              <p class="muted">Choose the folder on your laptop where you store exported reviewed CSVs and the shared rules file. Chrome and Edge can remember and write to the folder; Safari can load it for the current tab.</p>
             </div>
             <div id="folderStatus" class="notice warn">No historic CSV folder connected.</div>
             <div class="button-grid">
@@ -647,6 +647,7 @@
               <button id="forgetFolderBtn" class="secondary" type="button">Forget folder</button>
               <button id="clearHistoricCacheBtn" class="danger" type="button">Clear loaded cache</button>
             </div>
+            <input id="fallbackFolderInput" class="hidden" type="file" webkitdirectory directory multiple />
           </section>
 
           <section class="card stack">
@@ -745,6 +746,7 @@
       pendingTagFilter: document.getElementById("pendingTagFilter"),
       pendingGroups: document.getElementById("pendingGroups"),
       folderStatus: document.getElementById("folderStatus"),
+      fallbackFolderInput: document.getElementById("fallbackFolderInput"),
       connectFolderBtn: document.getElementById("connectFolderBtn"),
       syncFolderBtn: document.getElementById("syncFolderBtn"),
       forgetFolderBtn: document.getElementById("forgetFolderBtn"),
@@ -786,6 +788,7 @@
     els.syncFolderBtn.addEventListener("click", () => syncHistoricCsvFolder({ silent: false }));
     els.forgetFolderBtn.addEventListener("click", forgetHistoricCsvFolder);
     els.clearHistoricCacheBtn.addEventListener("click", clearHistoricCache);
+    els.fallbackFolderInput.addEventListener("change", () => syncHistoricCsvFolder({ silent: false }));
 
     els.viewButtons.forEach(button => {
       button.addEventListener("click", () => switchView(button.dataset.viewTarget));
@@ -1060,7 +1063,10 @@
       els.csvFile.value = "";
       saveState();
       const suggested = getPendingSuggestionCount(getEntryPairs(pending, "review"));
-      showReviewNotice(`${pending.length} new row${pending.length === 1 ? "" : "s"} from ${file.name} are ready for review. ${suggested} tag suggestion${suggested === 1 ? "" : "s"} available from saved rules.`);
+      const suggestionMessage = suggested
+        ? `${suggested} optional tag suggestion${suggested === 1 ? "" : "s"} available from saved rules.`
+        : "Most rows can be reviewed and exported without adding a tag.";
+      showReviewNotice(`${pending.length} new row${pending.length === 1 ? "" : "s"} from ${file.name} are ready for review. ${suggestionMessage}`);
       render();
     }
 
@@ -1672,7 +1678,7 @@
 
     function renderSuggestionRules() {
       if (!state.suggestionRules.length) {
-        els.suggestionRuleList.innerHTML = `<p class="muted">No saved tag suggestions yet. Add local tags during review, then export the reviewed CSV to teach the app for next time.</p>`;
+        els.suggestionRuleList.innerHTML = `<p class="muted">No saved tag suggestions yet. That is fine if most entries do not need tags. When you do add one and export, the app will learn from it for next time.</p>`;
         return;
       }
 
@@ -1763,10 +1769,13 @@
       saveState();
       downloadCsv(csv, fileName);
       const rulesSaved = await saveRulesToConnectedFolder({ showMessage: false, requestPermission: false });
+      const learnedMessage = learned
+        ? ` Learned ${learned} optional tag suggestion update${learned === 1 ? "" : "s"}.`
+        : " No new tag suggestions were learned, which is fine when the rows did not need extra tags.";
       const rulesMessage = rulesSaved
         ? ` Rules were also saved to ${RULES_FILE_NAME}.`
         : " Connect your historic CSV folder and use Save rules to folder so suggestions can follow the CSV exports.";
-      showReviewNotice(`Downloaded ${fileName}. Learned ${learned} tag suggestion rule update${learned === 1 ? "" : "s"}.${rulesMessage}`);
+      showReviewNotice(`Downloaded ${fileName}.${learnedMessage}${rulesMessage}`);
       render();
     }
 
@@ -1796,7 +1805,10 @@
       const writable = await fileHandle.createWritable();
       await writable.write(new Blob([csv], { type: "text/csv;charset=utf-8" }));
       await writable.close();
-      showReviewNotice(`Saved ${fileName} to the historic CSV folder. Learned ${learned} tag suggestion rule update${learned === 1 ? "" : "s"} and saved rules to ${RULES_FILE_NAME}.`);
+      const learnedMessage = learned
+        ? ` Learned ${learned} optional tag suggestion update${learned === 1 ? "" : "s"}`
+        : " No new tag suggestions were learned";
+      showReviewNotice(`Saved ${fileName} to the historic CSV folder.${learnedMessage} and saved rules to ${RULES_FILE_NAME}.`);
       await syncHistoricCsvFolder({ silent: true });
       render();
     }
@@ -1817,18 +1829,58 @@
       return "showDirectoryPicker" in window && "indexedDB" in window;
     }
 
+    function directoryUploadSupported() {
+      return Boolean(els.fallbackFolderInput) && "webkitdirectory" in els.fallbackFolderInput;
+    }
+
+    function getFallbackFolderFiles() {
+      return Array.from(els.fallbackFolderInput?.files || []);
+    }
+
+    function getFallbackFolderName(files = getFallbackFolderFiles()) {
+      const first = files[0];
+      const relativePath = first && typeof first.webkitRelativePath === "string" ? first.webkitRelativePath : "";
+      return relativePath ? relativePath.split("/")[0] : "";
+    }
+
     function updateFolderStatus() {
       const supported = folderApiSupported();
-      [els.connectFolderBtn, els.syncFolderBtn, els.forgetFolderBtn, els.exportReviewToFolderBtn, els.saveRulesToFolderBtn].forEach(button => {
+      const fallbackSupported = directoryUploadSupported();
+      const fallbackFiles = getFallbackFolderFiles();
+      const fallbackFolderName = getFallbackFolderName(fallbackFiles);
+      [els.connectFolderBtn, els.syncFolderBtn, els.forgetFolderBtn].forEach(button => {
+        if (button) button.disabled = !(supported || fallbackSupported);
+      });
+      [els.exportReviewToFolderBtn, els.saveRulesToFolderBtn].forEach(button => {
         if (button) button.disabled = !supported;
       });
 
-      if (!supported) {
-        els.folderStatus.textContent = "Folder sync is not supported in this browser. Use Chrome or Edge, or download reviewed CSVs manually.";
+      if (!supported && !fallbackSupported) {
+        els.folderStatus.textContent = "Folder access is not supported in this browser. Download reviewed CSVs manually.";
         els.folderStatus.classList.remove("success");
         els.folderStatus.classList.add("warn");
-        els.exportReviewToFolderBtn.disabled = true;
-        els.saveRulesToFolderBtn.disabled = true;
+        updateRulesFileStatus();
+        return;
+      }
+
+      if (!supported) {
+        const hasFolder = Boolean(fallbackFiles.length && fallbackFolderName);
+        els.syncFolderBtn.disabled = !hasFolder;
+        els.forgetFolderBtn.disabled = !hasFolder;
+        if (!hasFolder) {
+          els.folderStatus.textContent = "This browser can load a historic folder for this tab only. Choose folder to import reviewed CSVs.";
+          els.folderStatus.classList.remove("success");
+          els.folderStatus.classList.add("warn");
+          updateRulesFileStatus();
+          return;
+        }
+
+        const lastSync = state.lastHistoricFolderSync ? new Date(state.lastHistoricFolderSync).toLocaleString() : "not synced yet";
+        const summary = state.lastHistoricSyncSummary;
+        const summaryText = summary ? ` Loaded ${summary.reviewedCsvFiles} reviewed CSV file${summary.reviewedCsvFiles === 1 ? "" : "s"}.` : "";
+        els.folderStatus.textContent = `Loaded folder for this tab: ${fallbackFolderName}. Last sync: ${lastSync}.${summaryText}`;
+        els.folderStatus.classList.remove("warn");
+        els.folderStatus.classList.add("success");
         updateRulesFileStatus();
         return;
       }
@@ -1863,7 +1915,13 @@
       els.rulesFileStatus.classList.remove("success", "warn");
 
       if (!folderApiSupported()) {
-        els.rulesFileStatus.textContent = "Rules folder storage is not supported in this browser. Use Chrome or Edge for the shared rules file.";
+        const fallbackFolderName = getFallbackFolderName();
+        if (!fallbackFolderName) {
+          els.rulesFileStatus.textContent = "Rules are cached in this browser. Folder upload can read historic CSVs, but it cannot save the shared rules file back to disk.";
+        } else {
+          const loaded = state.lastRulesFileSync ? ` Loaded: ${new Date(state.lastRulesFileSync).toLocaleString()}.` : " Not loaded yet.";
+          els.rulesFileStatus.textContent = `Read-only rules from ${RULES_FILE_NAME} in ${fallbackFolderName}.${loaded} Saving back to the folder needs Chrome or Edge.`;
+        }
         els.rulesFileStatus.classList.add("warn");
         return;
       }
@@ -1891,8 +1949,36 @@
         saveState();
         return { found: true, merged };
       } catch (error) {
-        if (error && error.name === "NotFoundError") return { found: false, merged: { tagRules: 0, suggestionRules: 0 } };
+        if (error && error.name === "NotFoundError") {
+          state.lastRulesFileSync = "";
+          saveState();
+          return { found: false, merged: { tagRules: 0, suggestionRules: 0 } };
+        }
+        state.lastRulesFileSync = "";
+        saveState();
         console.warn("Unable to read rules file", error);
+        return { found: false, error, merged: { tagRules: 0, suggestionRules: 0 } };
+      }
+    }
+
+    async function readRulesFromFiles(files) {
+      try {
+        const rulesFile = files.find(file => file.name === RULES_FILE_NAME);
+        if (!rulesFile) {
+          state.lastRulesFileSync = "";
+          saveState();
+          return { found: false, merged: { tagRules: 0, suggestionRules: 0 } };
+        }
+        const text = await rulesFile.text();
+        const payload = JSON.parse(text);
+        const merged = mergeRulesFromPayload(payload);
+        state.lastRulesFileSync = new Date().toISOString();
+        saveState();
+        return { found: true, merged };
+      } catch (error) {
+        state.lastRulesFileSync = "";
+        saveState();
+        console.warn("Unable to read rules file from uploaded folder", error);
         return { found: false, error, merged: { tagRules: 0, suggestionRules: 0 } };
       }
     }
@@ -1940,7 +2026,11 @@
 
     async function connectHistoricCsvFolder() {
       if (!folderApiSupported()) {
-        showReviewNotice("This browser does not support choosing a persistent folder. Use Chrome or Edge for folder sync.", "warn");
+        if (!directoryUploadSupported()) {
+          showReviewNotice("This browser does not support folder upload. Download reviewed CSVs manually.", "warn");
+          return;
+        }
+        els.fallbackFolderInput.click();
         return;
       }
 
@@ -1957,6 +2047,17 @@
     }
 
     async function syncHistoricCsvFolder({ silent = false } = {}) {
+      if (!folderApiSupported()) {
+        const files = getFallbackFolderFiles();
+        if (!files.length) {
+          if (!silent) els.fallbackFolderInput.click();
+          updateFolderStatus();
+          return;
+        }
+        await syncHistoricCsvFiles(files, { silent, folderName: getFallbackFolderName(files) || "selected folder" });
+        return;
+      }
+
       const handle = await getConnectedDirectoryHandle();
       if (!handle) {
         if (!silent) alert("Choose a historic CSV folder first.");
@@ -2018,6 +2119,54 @@
       render();
     }
 
+    async function syncHistoricCsvFiles(files, { silent = false, folderName = "selected folder" } = {}) {
+      const rulesLoad = await readRulesFromFiles(files);
+      const loadedEntries = [];
+      const existing = new Set();
+      let csvFiles = 0;
+      let reviewedCsvFiles = 0;
+      let ignoredCsvFiles = 0;
+      let duplicates = 0;
+
+      for (const file of files) {
+        if (!file.name.toLowerCase().endsWith(".csv")) continue;
+        csvFiles += 1;
+        const text = await file.text();
+        const rows = parseCsvToObjects(text);
+        if (!looksLikeReviewedExport(rows)) {
+          ignoredCsvFiles += 1;
+          continue;
+        }
+
+        reviewedCsvFiles += 1;
+        rows.forEach(row => {
+          const sourceName = file.webkitRelativePath || file.name;
+          const entry = ensureEntryId({ ...row, __sourceFile: sourceName });
+          if (existing.has(entry.__id)) {
+            duplicates += 1;
+            return;
+          }
+          existing.add(entry.__id);
+          loadedEntries.push(entry);
+        });
+      }
+
+      state.historicEntries = loadedEntries;
+      state.historicCsvFolderName = folderName;
+      state.lastHistoricFolderSync = new Date().toISOString();
+      state.lastHistoricSyncSummary = { csvFiles, reviewedCsvFiles, ignoredCsvFiles, duplicates };
+      saveState();
+
+      if (!silent) {
+        const ignoredMessage = ignoredCsvFiles ? ` ${ignoredCsvFiles} CSV file${ignoredCsvFiles === 1 ? "" : "s"} ignored because they did not look like reviewed exports.` : "";
+        const rulesMessage = rulesLoad.found
+          ? ` Loaded rules from ${RULES_FILE_NAME}.`
+          : ` No ${RULES_FILE_NAME} file found yet.`;
+        alert(`Loaded ${reviewedCsvFiles} reviewed CSV file${reviewedCsvFiles === 1 ? "" : "s"} from ${folderName}. Loaded ${loadedEntries.length} row${loadedEntries.length === 1 ? "" : "s"}; skipped ${duplicates} duplicate row${duplicates === 1 ? "" : "s"}.${ignoredMessage}${rulesMessage}`);
+      }
+      render();
+    }
+
     function looksLikeReviewedExport(rows) {
       return rows.some(row => REVIEW_EXPORT_FIELDS.some(field => Object.prototype.hasOwnProperty.call(row, field)));
     }
@@ -2041,6 +2190,7 @@
 
     async function forgetHistoricCsvFolder() {
       currentDirectoryHandle = null;
+      if (els.fallbackFolderInput) els.fallbackFolderInput.value = "";
       state.historicCsvFolderName = "";
       state.lastHistoricFolderSync = "";
       state.lastHistoricSyncSummary = null;
