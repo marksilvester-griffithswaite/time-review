@@ -1,0 +1,2246 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Time Recording Assessor</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f6f8;
+      --panel: #ffffff;
+      --text: #172033;
+      --muted: #687386;
+      --border: #d9e0ea;
+      --border-strong: #aeb9c8;
+      --accent: #2563eb;
+      --accent-dark: #1d4ed8;
+      --review: #b45309;
+      --review-bg: #fff7ed;
+      --historic: #047857;
+      --historic-bg: #ecfdf5;
+      --soft: #f8fafc;
+      --danger: #b91c1c;
+      --danger-bg: #fef2f2;
+      --shadow: 0 14px 36px rgba(15, 23, 42, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+    }
+
+    header {
+      background: linear-gradient(135deg, #0f172a, #1f2937);
+      color: white;
+      padding: 30px 24px;
+    }
+
+    header h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.9rem, 4vw, 3rem);
+      letter-spacing: -0.045em;
+    }
+
+    header p {
+      max-width: 1040px;
+      margin: 0;
+      color: #d1d5db;
+    }
+
+    main {
+      width: min(1580px, 100%);
+      margin: 0 auto;
+      padding: 22px;
+    }
+
+    h2, h3 {
+      margin: 0 0 12px;
+      letter-spacing: -0.025em;
+    }
+
+    h2 { font-size: 1.25rem; }
+    h3 { font-size: 1rem; }
+    p { margin: 0 0 10px; }
+
+    label {
+      display: grid;
+      gap: 6px;
+      font-weight: 650;
+      color: #374151;
+    }
+
+    input, select, button, textarea { font: inherit; }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 11px;
+      background: white;
+      color: var(--text);
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: 3px solid rgba(37, 99, 235, 0.18);
+      border-color: var(--accent);
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 10px 14px;
+      background: var(--accent);
+      color: white;
+      font-weight: 750;
+      cursor: pointer;
+      box-shadow: 0 8px 18px rgba(37, 99, 235, 0.22);
+    }
+
+    button:hover { background: var(--accent-dark); }
+    button:disabled { cursor: not-allowed; opacity: 0.5; }
+
+    button.secondary {
+      color: var(--text);
+      background: white;
+      border: 1px solid var(--border);
+      box-shadow: none;
+    }
+
+    button.secondary:hover { background: var(--soft); }
+
+    button.danger {
+      background: var(--danger-bg);
+      color: var(--danger);
+      border: 1px solid #fecaca;
+      box-shadow: none;
+    }
+
+    button.danger:hover { background: #fee2e2; }
+
+    button.small {
+      padding: 6px 9px;
+      border-radius: 10px;
+      font-size: 0.86rem;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .stack { display: grid; gap: 16px; }
+    .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .row.between { justify-content: space-between; }
+    .hidden { display: none !important; }
+    .muted { color: var(--muted); }
+    .wide { min-width: min(420px, 100%); flex: 1 1 320px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+    .step-switcher {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .step-button {
+      text-align: left;
+      color: var(--text);
+      background: white;
+      border: 2px solid var(--border);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      display: grid;
+      gap: 6px;
+      min-height: 126px;
+    }
+
+    .step-button:hover { background: white; border-color: var(--border-strong); }
+
+    .step-button strong {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 1.16rem;
+    }
+
+    .step-button span {
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .step-button.active[data-view-target="review"] {
+      border-color: var(--review);
+      background: var(--review-bg);
+    }
+
+    .step-button.active[data-view-target="historic"] {
+      border-color: var(--historic);
+      background: var(--historic-bg);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 1.7rem;
+      height: 1.7rem;
+      padding: 0 8px;
+      border-radius: 999px;
+      background: #e5e7eb;
+      color: #111827;
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+
+    .badge.review { background: #fed7aa; color: #7c2d12; }
+    .badge.historic { background: #a7f3d0; color: #064e3b; }
+
+    .view-panel { display: none; gap: 16px; }
+    .view-panel.active { display: grid; }
+
+    .view-banner {
+      border-radius: 20px;
+      padding: 18px;
+      border: 2px solid;
+      display: grid;
+      gap: 6px;
+    }
+
+    .view-banner.review {
+      background: var(--review-bg);
+      border-color: #fdba74;
+    }
+
+    .view-banner.historic {
+      background: var(--historic-bg);
+      border-color: #86efac;
+    }
+
+    .view-banner h2 {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin: 0;
+    }
+
+    .section-label {
+      display: inline-flex;
+      width: fit-content;
+      align-items: center;
+      gap: 7px;
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 0.82rem;
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .section-label.review { background: #fed7aa; color: #7c2d12; }
+    .section-label.historic { background: #bbf7d0; color: #065f46; }
+
+    .notice {
+      border-radius: 14px;
+      padding: 12px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #1e3a8a;
+      font-weight: 650;
+    }
+
+    .notice.warn {
+      background: #fffbeb;
+      border-color: #fde68a;
+      color: #92400e;
+    }
+
+    .notice.success {
+      background: #ecfdf5;
+      border-color: #86efac;
+      color: #065f46;
+    }
+
+    .two-column {
+      display: grid;
+      grid-template-columns: 360px minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    @media (max-width: 1050px) {
+      .two-column, .step-switcher { grid-template-columns: 1fr; }
+    }
+
+    .side-panel {
+      position: sticky;
+      top: 16px;
+    }
+
+    @media (max-width: 1050px) {
+      .side-panel { position: static; }
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    @media (max-width: 760px) {
+      .button-grid { grid-template-columns: 1fr; }
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    @media (max-width: 900px) {
+      .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    .mini-stat {
+      border: 1px solid var(--border);
+      background: var(--soft);
+      border-radius: 16px;
+      padding: 12px;
+    }
+
+    .mini-stat strong {
+      display: block;
+      font-size: 1.45rem;
+      letter-spacing: -0.03em;
+    }
+
+    .mini-stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .filters {
+      display: flex;
+      gap: 12px;
+      align-items: end;
+      flex-wrap: wrap;
+    }
+
+    .filters label { flex: 1 1 180px; }
+
+    .rule-list { display: grid; gap: 8px; }
+
+    .rule {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--soft);
+    }
+
+    .tag-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #e0e7ff;
+      color: #3730a3;
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-weight: 750;
+      font-size: 0.82rem;
+      white-space: nowrap;
+    }
+
+    .suggestion-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      min-width: 220px;
+    }
+
+    .suggestion-chip {
+      display: inline-flex;
+      gap: 5px;
+      align-items: center;
+      border: 1px solid #bfdbfe;
+      background: #eff6ff;
+      color: #1e3a8a;
+      border-radius: 999px;
+      padding: 3px 6px 3px 8px;
+      font-size: 0.82rem;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    .suggestion-chip button {
+      padding: 2px 6px;
+      border-radius: 999px;
+      box-shadow: none;
+      font-size: 0.76rem;
+    }
+
+    .suggestion-chip button.dismiss {
+      background: white;
+      color: #1e3a8a;
+      border: 1px solid #bfdbfe;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-weight: 760;
+      font-size: 0.82rem;
+      white-space: nowrap;
+    }
+
+    .status-pill.default { background: #f3f4f6; color: #374151; }
+    .status-pill.rule { background: #dbeafe; color: #1e40af; }
+    .status-pill.stored { background: #dcfce7; color: #166534; }
+    .status-pill.unmapped { background: #fef3c7; color: #92400e; }
+    .status-pill.review { background: #ffedd5; color: #9a3412; }
+    .status-pill.historic { background: #dcfce7; color: #166534; }
+
+    .group {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: white;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .group + .group { margin-top: 12px; }
+
+    .group summary {
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 15px 18px;
+      background: var(--soft);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .group summary::-webkit-details-marker { display: none; }
+
+    .group-name {
+      font-weight: 850;
+      font-size: 1.05rem;
+    }
+
+    .group-meta {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      max-height: 68vh;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1040px;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--border);
+      padding: 10px;
+      vertical-align: top;
+      text-align: left;
+      font-size: 0.92rem;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: white;
+      color: #374151;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    tbody tr:hover { background: #f8fafc; }
+    td.project { min-width: 220px; }
+    td.timecode { min-width: 180px; }
+    td.comment { min-width: 330px; }
+    td.tag-cell { min-width: 150px; }
+    td.local-tag { min-width: 170px; }
+    td.local-tag input { min-width: 140px; }
+    td.file { min-width: 210px; }
+
+    .empty {
+      text-align: center;
+      padding: 34px 18px;
+      color: var(--muted);
+      border-style: dashed;
+      background: white;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Time Recording Assessor</h1>
+    <p>Step 1 reviews one time recording CSV and exports a reviewed CSV. Step 2 loads historic reviewed CSVs from the folder you choose on your laptop.</p>
+  </header>
+
+  <main>
+    <section class="step-switcher" aria-label="App steps">
+      <button class="step-button active" data-view-target="review" type="button">
+        <strong>Step 1: Review and export CSV <span id="reviewBadge" class="badge review">0</span></strong>
+        <span>Work on the current CSV only. It does not become historic until you export the reviewed CSV.</span>
+      </button>
+      <button class="step-button" data-view-target="historic" type="button">
+        <strong>Step 2: Review historic CSVs <span id="historicBadge" class="badge historic">0</span></strong>
+        <span>Read previously reviewed CSVs from a folder you define on your laptop.</span>
+      </button>
+    </section>
+
+    <section id="reviewView" class="view-panel active" aria-labelledby="reviewTitle">
+      <div class="view-banner review">
+        <span class="section-label review">Current CSV only</span>
+        <h2 id="reviewTitle">Review a time recording CSV, then export it</h2>
+        <p class="muted">This step is deliberately separate from historic review. The rows below are a temporary review area until you export them as a reviewed CSV.</p>
+      </div>
+
+      <div class="two-column">
+        <aside class="side-panel stack">
+          <section class="card stack">
+            <div>
+              <h2>Import time CSV</h2>
+              <p class="muted">The app checks the file against historic CSVs already loaded from your folder, then only shows new rows for review.</p>
+            </div>
+            <label>
+              CSV file
+              <input id="csvFile" type="file" accept=".csv,text/csv" />
+            </label>
+            <div class="button-grid">
+              <button id="importBtn" type="button">Assess CSV</button>
+              <button id="clearReviewBtn" class="secondary" type="button">Clear current review</button>
+            </div>
+            <div id="reviewNotice" class="notice hidden"></div>
+          </section>
+
+          <section class="card stack">
+            <div>
+              <h2>Tag rules</h2>
+              <p class="muted">A mapped tag overrides the original project when exporting the reviewed CSV. These rules are saved to the historic CSV folder rules file when the folder is connected.</p>
+            </div>
+            <label>
+              Tag
+              <input id="ruleTag" type="text" list="tagOptions" placeholder="#tag" />
+            </label>
+            <label>
+              Assign to project or group
+              <input id="ruleTarget" type="text" list="projectOptions" placeholder="Project or review group" />
+            </label>
+            <button id="addRuleBtn" type="button">Save tag rule</button>
+            <datalist id="tagOptions"></datalist>
+            <datalist id="projectOptions"></datalist>
+            <div id="ruleList" class="rule-list"></div>
+          </section>
+
+          <section class="card stack">
+            <div>
+              <h2>Unmapped tags in current review</h2>
+              <p class="muted">Tags found in comments or local tag fields that do not yet have a rule.</p>
+            </div>
+            <div id="unmappedTags" class="row"></div>
+          </section>
+
+          <section class="card stack">
+            <div>
+              <h2>Saved tag suggestions</h2>
+              <p class="muted">When you export reviewed rows, the app learns Project + Timecode to Tag suggestions for future CSV reviews. The rules are stored in the historic CSV folder as <span class="mono">time-recording-assessor-rules.json</span>.</p>
+            </div>
+            <div id="rulesFileStatus" class="notice warn">Rules file not loaded yet.</div>
+            <div class="button-grid">
+              <button id="applySuggestionsBtn" class="secondary" type="button">Apply visible suggestions</button>
+              <button id="saveRulesToFolderBtn" class="secondary" type="button">Save rules to folder</button>
+              <button id="clearSuggestionRulesBtn" class="danger" type="button">Clear suggestion rules</button>
+            </div>
+            <div id="suggestionRuleList" class="rule-list"></div>
+          </section>
+
+          <section class="card stack">
+            <div>
+              <h2>Export reviewed CSV</h2>
+              <p class="muted">This is the end of Step 1. Save the reviewed CSV into the folder you use for historic review.</p>
+            </div>
+            <button id="exportReviewBtn" type="button">Download reviewed CSV</button>
+            <button id="exportReviewToFolderBtn" class="secondary" type="button">Export reviewed CSV to historic folder</button>
+          </section>
+        </aside>
+
+        <section class="stack">
+          <section class="card stack">
+            <div class="row between">
+              <div>
+                <h2>Current review status</h2>
+                <p id="currentReviewLabel" class="muted">No CSV is currently being reviewed.</p>
+              </div>
+              <span class="status-pill review">Temporary review area</span>
+            </div>
+            <div class="summary-grid">
+              <div class="mini-stat"><strong id="pendingCount">0</strong><span>new rows waiting for review</span></div>
+              <div class="mini-stat"><strong id="skippedHistoricCount">0</strong><span>already in loaded historic CSVs</span></div>
+              <div class="mini-stat"><strong id="skippedFileCount">0</strong><span>repeated inside CSV</span></div>
+              <div class="mini-stat"><strong id="suggestionCount">0</strong><span>tag suggestions available</span></div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="row between">
+              <div>
+                <h2>Review filters</h2>
+                <p class="muted">Focused on project, timecode, comment and tags.</p>
+              </div>
+            </div>
+            <div class="filters">
+              <label class="wide">Search current review
+                <input id="pendingSearch" type="text" placeholder="Search project, timecode, comment or tag" />
+              </label>
+              <label>Project or group
+                <select id="pendingProjectFilter"></select>
+              </label>
+              <label>Timecode
+                <select id="pendingTimecodeFilter"></select>
+              </label>
+              <label>Tag
+                <select id="pendingTagFilter"></select>
+              </label>
+            </div>
+          </section>
+
+          <section id="pendingGroups"></section>
+        </section>
+      </div>
+    </section>
+
+    <section id="historicView" class="view-panel" aria-labelledby="historicTitle">
+      <div class="view-banner historic">
+        <span class="section-label historic">Reviewed CSV folder only</span>
+        <h2 id="historicTitle">Review historic time recording</h2>
+        <p class="muted">Historic data is read from reviewed CSVs in your chosen folder. The current import review does not feed this view directly.</p>
+      </div>
+
+      <div class="two-column">
+        <aside class="side-panel stack">
+          <section class="card stack">
+            <div>
+              <h2>Historic CSV folder</h2>
+              <p class="muted">Choose the folder on your laptop where you store exported reviewed CSVs and the shared rules file. Chrome and Edge can usually remember this permission.</p>
+            </div>
+            <div id="folderStatus" class="notice warn">No historic CSV folder connected.</div>
+            <div class="button-grid">
+              <button id="connectFolderBtn" type="button">Choose folder</button>
+              <button id="syncFolderBtn" class="secondary" type="button">Sync folder</button>
+              <button id="forgetFolderBtn" class="secondary" type="button">Forget folder</button>
+              <button id="clearHistoricCacheBtn" class="danger" type="button">Clear loaded cache</button>
+            </div>
+          </section>
+
+          <section class="card stack">
+            <div>
+              <h2>How historic works</h2>
+              <p class="muted">The folder is the source of truth. Reviewed CSVs provide the historic table, and <span class="mono">time-recording-assessor-rules.json</span> provides your reusable tag and suggestion rules.</p>
+            </div>
+          </section>
+        </aside>
+
+        <section class="stack">
+          <section class="card stack">
+            <div class="row between">
+              <div>
+                <h2>Historic filters</h2>
+                <p class="muted">Filter reviewed CSV history by date, project, timecode, tag or text.</p>
+              </div>
+              <span class="status-pill historic">Loaded from reviewed CSVs</span>
+            </div>
+            <div class="filters">
+              <label>From
+                <input id="historicFrom" type="date" />
+              </label>
+              <label>To
+                <input id="historicTo" type="date" />
+              </label>
+              <label>Project or group
+                <select id="historicProjectFilter"></select>
+              </label>
+              <label>Timecode
+                <select id="historicTimecodeFilter"></select>
+              </label>
+              <label>Tag
+                <select id="historicTagFilter"></select>
+              </label>
+              <label class="wide">Search historic time
+                <input id="historicSearch" type="text" placeholder="Search project, timecode, comment, tag or source CSV" />
+              </label>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="summary-grid">
+              <div class="mini-stat"><strong id="historicCount">0</strong><span>historic rows loaded</span></div>
+              <div class="mini-stat"><strong id="historicFilteredCount">0</strong><span>rows currently shown</span></div>
+              <div class="mini-stat"><strong id="historicCsvCount">0</strong><span>reviewed CSVs loaded</span></div>
+              <div class="mini-stat"><strong id="historicTagCount">0</strong><span>tags in history</span></div>
+            </div>
+          </section>
+
+          <section id="historicGroups"></section>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "time-recording-assessor-v7";
+    const LEGACY_KEYS = ["time-recording-assessor-v6", "time-recording-assessor-v5", "time-recording-assessor-v2", "time-recording-assessor-v1"];
+    const HANDLE_DB_NAME = "time-recording-assessor-handles";
+    const HANDLE_STORE_NAME = "handles";
+    const HISTORIC_FOLDER_HANDLE_KEY = "historicCsvFolder";
+    const RULES_FILE_NAME = "time-recording-assessor-rules.json";
+    const RULES_FILE_VERSION = 1;
+    const REVIEW_EXPORT_FIELDS = ["Local Tag", "Detected Tags", "Assigned Group", "Assigned By", "Assignment Source"];
+    const CORE_FIELDS = [
+      "Date", "Person", "Company Name", "Project Name", "Budget Name", "Timecode Name",
+      "Issue ID", "Worked Hours", "Worked Time", "Comment"
+    ];
+
+    const state = loadState();
+    let currentDirectoryHandle = null;
+
+    const els = {
+      csvFile: document.getElementById("csvFile"),
+      importBtn: document.getElementById("importBtn"),
+      clearReviewBtn: document.getElementById("clearReviewBtn"),
+      exportReviewBtn: document.getElementById("exportReviewBtn"),
+      exportReviewToFolderBtn: document.getElementById("exportReviewToFolderBtn"),
+      reviewNotice: document.getElementById("reviewNotice"),
+      currentReviewLabel: document.getElementById("currentReviewLabel"),
+      ruleTag: document.getElementById("ruleTag"),
+      ruleTarget: document.getElementById("ruleTarget"),
+      addRuleBtn: document.getElementById("addRuleBtn"),
+      ruleList: document.getElementById("ruleList"),
+      unmappedTags: document.getElementById("unmappedTags"),
+      applySuggestionsBtn: document.getElementById("applySuggestionsBtn"),
+      clearSuggestionRulesBtn: document.getElementById("clearSuggestionRulesBtn"),
+      suggestionRuleList: document.getElementById("suggestionRuleList"),
+      rulesFileStatus: document.getElementById("rulesFileStatus"),
+      saveRulesToFolderBtn: document.getElementById("saveRulesToFolderBtn"),
+      tagOptions: document.getElementById("tagOptions"),
+      projectOptions: document.getElementById("projectOptions"),
+      pendingSearch: document.getElementById("pendingSearch"),
+      pendingProjectFilter: document.getElementById("pendingProjectFilter"),
+      pendingTimecodeFilter: document.getElementById("pendingTimecodeFilter"),
+      pendingTagFilter: document.getElementById("pendingTagFilter"),
+      pendingGroups: document.getElementById("pendingGroups"),
+      folderStatus: document.getElementById("folderStatus"),
+      connectFolderBtn: document.getElementById("connectFolderBtn"),
+      syncFolderBtn: document.getElementById("syncFolderBtn"),
+      forgetFolderBtn: document.getElementById("forgetFolderBtn"),
+      clearHistoricCacheBtn: document.getElementById("clearHistoricCacheBtn"),
+      historicFrom: document.getElementById("historicFrom"),
+      historicTo: document.getElementById("historicTo"),
+      historicProjectFilter: document.getElementById("historicProjectFilter"),
+      historicTimecodeFilter: document.getElementById("historicTimecodeFilter"),
+      historicTagFilter: document.getElementById("historicTagFilter"),
+      historicSearch: document.getElementById("historicSearch"),
+      historicGroups: document.getElementById("historicGroups"),
+      reviewBadge: document.getElementById("reviewBadge"),
+      historicBadge: document.getElementById("historicBadge"),
+      pendingCount: document.getElementById("pendingCount"),
+      skippedHistoricCount: document.getElementById("skippedHistoricCount"),
+      skippedFileCount: document.getElementById("skippedFileCount"),
+      suggestionCount: document.getElementById("suggestionCount"),
+      historicCount: document.getElementById("historicCount"),
+      historicFilteredCount: document.getElementById("historicFilteredCount"),
+      historicCsvCount: document.getElementById("historicCsvCount"),
+      historicTagCount: document.getElementById("historicTagCount"),
+      viewButtons: Array.from(document.querySelectorAll("[data-view-target]")),
+      viewPanels: {
+        review: document.getElementById("reviewView"),
+        historic: document.getElementById("historicView")
+      }
+    };
+
+    els.importBtn.addEventListener("click", importCsv);
+    els.clearReviewBtn.addEventListener("click", clearCurrentReview);
+    els.exportReviewBtn.addEventListener("click", downloadReviewedCsv);
+    els.exportReviewToFolderBtn.addEventListener("click", exportReviewedCsvToFolder);
+    els.addRuleBtn.addEventListener("click", addRule);
+    els.applySuggestionsBtn.addEventListener("click", applyVisibleSuggestions);
+    els.saveRulesToFolderBtn.addEventListener("click", () => saveRulesToConnectedFolder({ showMessage: true }));
+    els.clearSuggestionRulesBtn.addEventListener("click", clearSuggestionRules);
+    els.ruleTag.addEventListener("blur", () => { els.ruleTag.value = cleanTag(els.ruleTag.value); });
+    els.connectFolderBtn.addEventListener("click", connectHistoricCsvFolder);
+    els.syncFolderBtn.addEventListener("click", () => syncHistoricCsvFolder({ silent: false }));
+    els.forgetFolderBtn.addEventListener("click", forgetHistoricCsvFolder);
+    els.clearHistoricCacheBtn.addEventListener("click", clearHistoricCache);
+
+    els.viewButtons.forEach(button => {
+      button.addEventListener("click", () => switchView(button.dataset.viewTarget));
+    });
+
+    [
+      els.pendingSearch, els.pendingProjectFilter, els.pendingTimecodeFilter, els.pendingTagFilter,
+      els.historicFrom, els.historicTo, els.historicProjectFilter, els.historicTimecodeFilter, els.historicTagFilter, els.historicSearch
+    ].forEach(el => {
+      el.addEventListener("input", render);
+      el.addEventListener("change", render);
+    });
+
+    els.pendingGroups.addEventListener("change", event => {
+      const input = event.target.closest("input[data-local-tag]");
+      if (!input) return;
+      const entry = state.pendingEntries.find(item => item.__id === input.dataset.entryId);
+      if (!entry) return;
+      entry.__localTag = normalizeTagInput(input.value);
+      input.value = entry.__localTag;
+      saveState();
+      render();
+    });
+
+    els.pendingGroups.addEventListener("click", event => {
+      const applyButton = event.target.closest("[data-apply-suggested-tag]");
+      if (applyButton) {
+        const entry = state.pendingEntries.find(item => item.__id === applyButton.dataset.entryId);
+        const tag = cleanTag(applyButton.dataset.applySuggestedTag);
+        if (entry && tag) {
+          addTagToEntry(entry, tag);
+          saveState();
+          render();
+        }
+        return;
+      }
+
+      const dismissButton = event.target.closest("[data-dismiss-suggested-tag]");
+      if (dismissButton) {
+        const entry = state.pendingEntries.find(item => item.__id === dismissButton.dataset.entryId);
+        const tag = cleanTag(dismissButton.dataset.dismissSuggestedTag);
+        if (entry && tag) {
+          upsertSuggestionRule(entry, tag, "avoid");
+          saveState();
+          saveRulesToConnectedFolder({ showMessage: false, requestPermission: false });
+          render();
+        }
+      }
+    });
+
+    els.ruleList.addEventListener("click", event => {
+      const button = event.target.closest("[data-remove-rule]");
+      if (!button) return;
+      const index = Number(button.dataset.removeRule);
+      state.tagRules.splice(index, 1);
+      saveState();
+      saveRulesToConnectedFolder({ showMessage: false, requestPermission: false });
+      render();
+    });
+
+    els.suggestionRuleList.addEventListener("click", event => {
+      const button = event.target.closest("[data-remove-suggestion-rule]");
+      if (!button) return;
+      const index = Number(button.dataset.removeSuggestionRule);
+      state.suggestionRules.splice(index, 1);
+      saveState();
+      saveRulesToConnectedFolder({ showMessage: false, requestPermission: false });
+      render();
+    });
+
+    els.unmappedTags.addEventListener("click", event => {
+      const button = event.target.closest("[data-use-tag]");
+      if (!button) return;
+      els.ruleTag.value = cleanTag(button.dataset.useTag);
+      els.ruleTarget.focus();
+    });
+
+    function loadState() {
+      const blank = {
+        pendingEntries: [],
+        pendingFileName: "",
+        lastImportSummary: null,
+        historicEntries: [],
+        historicCsvFolderName: "",
+        lastHistoricFolderSync: "",
+        lastHistoricSyncSummary: null,
+        lastRulesFileSync: "",
+        lastRulesFileSave: "",
+        tagRules: [],
+        suggestionRules: [],
+        activeView: "review"
+      };
+
+      const raw = localStorage.getItem(STORAGE_KEY) || LEGACY_KEYS.map(key => localStorage.getItem(key)).find(Boolean);
+      if (!raw) return blank;
+
+      try {
+        const parsed = JSON.parse(raw);
+        const loaded = { ...blank, ...parsed };
+        loaded.pendingEntries = Array.isArray(loaded.pendingEntries) ? loaded.pendingEntries : [];
+        loaded.historicEntries = Array.isArray(loaded.historicEntries) ? loaded.historicEntries : (Array.isArray(loaded.entries) ? loaded.entries : []);
+        loaded.tagRules = Array.isArray(loaded.tagRules) ? loaded.tagRules : [];
+        loaded.tagRules = normaliseTagRules(loaded.tagRules);
+        loaded.suggestionRules = Array.isArray(loaded.suggestionRules) ? loaded.suggestionRules.map(ensureSuggestionRule).filter(Boolean) : [];
+        loaded.pendingEntries = loaded.pendingEntries.map(ensureEntryId);
+        loaded.historicEntries = loaded.historicEntries.map(ensureEntryId);
+        loaded.activeView = loaded.activeView === "historic" ? "historic" : "review";
+        return loaded;
+      } catch (error) {
+        console.warn("Unable to load saved state", error);
+        return blank;
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function normaliseTagRules(rules) {
+      if (!Array.isArray(rules)) return [];
+      const map = new Map();
+      rules.forEach(rule => {
+        const tag = cleanTag(rule && rule.tag);
+        const target = normalize(rule && rule.target);
+        if (tag && target) map.set(tag, { tag, target });
+      });
+      return Array.from(map.values()).sort((a, b) => a.tag.localeCompare(b.tag));
+    }
+
+    function mergeRulesFromPayload(payload) {
+      if (!payload || typeof payload !== "object") return { tagRules: 0, suggestionRules: 0 };
+
+      const beforeTagKeys = new Set(state.tagRules.map(rule => cleanTag(rule.tag)));
+      const beforeSuggestionKeys = new Set(state.suggestionRules.map(rule => {
+        const clean = ensureSuggestionRule(rule);
+        return clean ? getSuggestionRuleKey(clean, clean.tag, clean.type) : "";
+      }).filter(Boolean));
+
+      state.tagRules = normaliseTagRules([
+        ...state.tagRules,
+        ...(Array.isArray(payload.tagRules) ? payload.tagRules : [])
+      ]);
+
+      const mergedSuggestions = new Map();
+      state.suggestionRules.forEach(rule => {
+        const clean = ensureSuggestionRule(rule);
+        if (!clean) return;
+        mergedSuggestions.set(getSuggestionRuleKey(clean, clean.tag, clean.type), clean);
+      });
+
+      (Array.isArray(payload.suggestionRules) ? payload.suggestionRules : []).forEach(rule => {
+        const clean = ensureSuggestionRule(rule);
+        if (!clean) return;
+        const key = getSuggestionRuleKey(clean, clean.tag, clean.type);
+        const existing = mergedSuggestions.get(key);
+        if (existing) {
+          existing.count = Math.max(Number(existing.count || 1), Number(clean.count || 1));
+          existing.updatedAt = [existing.updatedAt, clean.updatedAt].filter(Boolean).sort().pop() || new Date().toISOString();
+        } else {
+          mergedSuggestions.set(key, clean);
+        }
+      });
+
+      state.suggestionRules = Array.from(mergedSuggestions.values())
+        .sort((a, b) => a.type.localeCompare(b.type) || a.project.localeCompare(b.project) || a.timecode.localeCompare(b.timecode) || a.tag.localeCompare(b.tag));
+
+      const afterTagKeys = new Set(state.tagRules.map(rule => cleanTag(rule.tag)));
+      const afterSuggestionKeys = new Set(state.suggestionRules.map(rule => {
+        const clean = ensureSuggestionRule(rule);
+        return clean ? getSuggestionRuleKey(clean, clean.tag, clean.type) : "";
+      }).filter(Boolean));
+
+      return {
+        tagRules: afterTagKeys.size - beforeTagKeys.size,
+        suggestionRules: afterSuggestionKeys.size - beforeSuggestionKeys.size
+      };
+    }
+
+    function buildRulesPayload() {
+      return {
+        app: "time-recording-assessor",
+        version: RULES_FILE_VERSION,
+        exportedAt: new Date().toISOString(),
+        tagRules: normaliseTagRules(state.tagRules),
+        suggestionRules: state.suggestionRules.map(ensureSuggestionRule).filter(Boolean)
+      };
+    }
+
+    function ensureEntryId(entry) {
+      const copy = { ...entry };
+      if (!copy.__id) copy.__id = makeEntryId(copy);
+      copy.__localTag = normalizeTagInput(copy.__localTag || copy["Local Tag"] || "");
+      copy.__historicTags = normalizeTagInput(copy.__historicTags || copy["Detected Tags"] || "");
+      copy.__storedAssignedGroup = normalize(copy.__storedAssignedGroup || copy["Assigned Group"] || "");
+      copy.__storedAssignedBy = normalize(copy.__storedAssignedBy || copy["Assigned By"] || "");
+      copy.__storedAssignmentSource = normalize(copy.__storedAssignmentSource || copy["Assignment Source"] || "");
+      copy.__sourceFile = normalize(copy.__sourceFile || copy["Source CSV"] || "");
+      return copy;
+    }
+
+    function ensureSuggestionRule(rule) {
+      const project = normalize(rule.project);
+      const timecode = normalize(rule.timecode);
+      const tag = cleanTag(rule.tag);
+      const type = rule.type === "avoid" ? "avoid" : "suggest";
+      if (!tag || (!project && !timecode)) return null;
+      return {
+        type,
+        project,
+        timecode,
+        tag,
+        count: Number(rule.count || rule.examples || 1),
+        updatedAt: rule.updatedAt || new Date().toISOString()
+      };
+    }
+
+    function switchView(view) {
+      state.activeView = view === "historic" ? "historic" : "review";
+      saveState();
+      renderViewState();
+    }
+
+    function renderViewState() {
+      els.viewButtons.forEach(button => {
+        const isActive = button.dataset.viewTarget === state.activeView;
+        button.classList.toggle("active", isActive);
+        button.setAttribute("aria-pressed", String(isActive));
+      });
+
+      Object.entries(els.viewPanels).forEach(([name, panel]) => {
+        panel.classList.toggle("active", name === state.activeView);
+      });
+    }
+
+    async function importCsv() {
+      const file = els.csvFile.files[0];
+      if (!file) {
+        showReviewNotice("Choose a CSV file first.", "warn");
+        return;
+      }
+
+      if (state.pendingEntries.length) {
+        const replace = confirm("This will replace the current review CSV. Historic CSVs loaded from your folder will not be changed. Continue?");
+        if (!replace) return;
+      }
+
+      const text = await file.text();
+      const rows = parseCsvToObjects(text);
+      const existingHistoric = new Set(state.historicEntries.map(entry => entry.__id));
+      const seenInFile = new Set();
+      const pending = [];
+      let skippedHistoric = 0;
+      let skippedRepeatedInFile = 0;
+
+      rows.forEach(row => {
+        const entry = ensureEntryId(row);
+        if (existingHistoric.has(entry.__id)) {
+          skippedHistoric += 1;
+          return;
+        }
+        if (seenInFile.has(entry.__id)) {
+          skippedRepeatedInFile += 1;
+          return;
+        }
+        seenInFile.add(entry.__id);
+        pending.push(entry);
+      });
+
+      state.pendingEntries = pending;
+      state.pendingFileName = file.name;
+      state.lastImportSummary = {
+        fileName: file.name,
+        totalRows: rows.length,
+        newRows: pending.length,
+        skippedHistoric,
+        skippedRepeatedInFile
+      };
+      state.activeView = "review";
+      els.csvFile.value = "";
+      saveState();
+      const suggested = getPendingSuggestionCount(getEntryPairs(pending, "review"));
+      showReviewNotice(`${pending.length} new row${pending.length === 1 ? "" : "s"} from ${file.name} are ready for review. ${suggested} tag suggestion${suggested === 1 ? "" : "s"} available from saved rules.`);
+      render();
+    }
+
+    function clearCurrentReview() {
+      if (!state.pendingEntries.length && !state.pendingFileName) {
+        showReviewNotice("There is no current CSV review to clear.", "warn");
+        return;
+      }
+
+      const ok = confirm("Clear the current CSV review? This does not change historic CSVs.");
+      if (!ok) return;
+
+      state.pendingEntries = [];
+      state.pendingFileName = "";
+      state.lastImportSummary = null;
+      saveState();
+      showReviewNotice("Current CSV review cleared.");
+      render();
+    }
+
+    function parseCsvToObjects(text) {
+      const rows = parseCsvRows(text.replace(/^\uFEFF/, ""));
+      if (!rows.length) return [];
+      const headers = rows[0].map(header => header.trim());
+      return rows.slice(1)
+        .filter(row => row.some(value => String(value || "").trim() !== ""))
+        .map(row => {
+          const obj = {};
+          headers.forEach((header, index) => {
+            obj[header] = row[index] === undefined ? "" : row[index];
+          });
+          return obj;
+        });
+    }
+
+    function parseCsvRows(text) {
+      const rows = [];
+      let row = [];
+      let field = "";
+      let inQuotes = false;
+
+      for (let i = 0; i < text.length; i += 1) {
+        const char = text[i];
+        const next = text[i + 1];
+
+        if (char === '"') {
+          if (inQuotes && next === '"') {
+            field += '"';
+            i += 1;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (char === "," && !inQuotes) {
+          row.push(field);
+          field = "";
+        } else if ((char === "\n" || char === "\r") && !inQuotes) {
+          if (char === "\r" && next === "\n") i += 1;
+          row.push(field);
+          rows.push(row);
+          row = [];
+          field = "";
+        } else {
+          field += char;
+        }
+      }
+
+      if (field.length || row.length) {
+        row.push(field);
+        rows.push(row);
+      }
+
+      return rows;
+    }
+
+    function makeEntryId(row) {
+      const payload = CORE_FIELDS.map(field => [field, normalize(row[field])]);
+      return hashString(JSON.stringify(payload));
+    }
+
+    function hashString(input) {
+      let hashOne = 0xdeadbeef;
+      let hashTwo = 0x41c6ce57;
+      for (let i = 0; i < input.length; i += 1) {
+        const code = input.charCodeAt(i);
+        hashOne = Math.imul(hashOne ^ code, 2654435761);
+        hashTwo = Math.imul(hashTwo ^ code, 1597334677);
+      }
+      hashOne = Math.imul(hashOne ^ (hashOne >>> 16), 2246822507) ^ Math.imul(hashTwo ^ (hashTwo >>> 13), 3266489909);
+      hashTwo = Math.imul(hashTwo ^ (hashTwo >>> 16), 2246822507) ^ Math.imul(hashOne ^ (hashOne >>> 13), 3266489909);
+      return (4294967296 * (2097151 & hashTwo) + (hashOne >>> 0)).toString(36);
+    }
+
+    function addRule() {
+      const tag = cleanTag(els.ruleTag.value);
+      const target = els.ruleTarget.value.trim();
+      if (!tag || !target) {
+        showReviewNotice("Add both a tag and a project or group for the rule.", "warn");
+        return;
+      }
+
+      const existing = state.tagRules.find(rule => cleanTag(rule.tag) === tag);
+      if (existing) {
+        existing.tag = tag;
+        existing.target = target;
+      } else {
+        state.tagRules.push({ tag, target });
+      }
+
+      state.tagRules = normaliseTagRules(state.tagRules);
+      els.ruleTag.value = "";
+      els.ruleTarget.value = "";
+      saveState();
+      saveRulesToConnectedFolder({ showMessage: false, requestPermission: false });
+      render();
+    }
+
+    function cleanTag(value) {
+      const trimmed = String(value || "").trim();
+      if (!trimmed) return "";
+      const body = trimmed.startsWith("#") ? trimmed.slice(1) : trimmed;
+      const cleaned = body.toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "");
+      return cleaned ? `#${cleaned}` : "";
+    }
+
+    function normalizeTagInput(value) {
+      const pieces = String(value || "")
+        .split(/[\s,;]+/)
+        .map(cleanTag)
+        .filter(Boolean);
+      return unique(pieces).join(" ");
+    }
+
+    function extractTags(text) {
+      return Array.from(String(text || "").matchAll(/#[\p{L}\p{N}_-]+/gu)).map(match => cleanTag(match[0])).filter(Boolean);
+    }
+
+    function getRuleMap() {
+      const map = new Map();
+      state.tagRules.forEach(rule => {
+        const tag = cleanTag(rule.tag);
+        if (tag && rule.target) map.set(tag, rule.target);
+      });
+      return map;
+    }
+
+    function getSuggestionContext(entry) {
+      return {
+        project: normalize(entry["Project Name"]),
+        timecode: normalize(entry["Timecode Name"])
+      };
+    }
+
+    function ruleMatchesEntry(rule, entry) {
+      const context = getSuggestionContext(entry);
+      if (rule.project && rule.project !== context.project) return false;
+      if (rule.timecode && rule.timecode !== context.timecode) return false;
+      return true;
+    }
+
+    function getSuggestedTags(entry) {
+      const suggested = new Set();
+      const avoided = new Set();
+
+      state.suggestionRules.forEach(rule => {
+        const cleanRule = ensureSuggestionRule(rule);
+        if (!cleanRule || !ruleMatchesEntry(cleanRule, entry)) return;
+        if (cleanRule.type === "avoid") avoided.add(cleanRule.tag);
+        else suggested.add(cleanRule.tag);
+      });
+
+      return Array.from(suggested)
+        .filter(tag => !avoided.has(tag))
+        .sort((a, b) => a.localeCompare(b));
+    }
+
+    function getSuggestedTagsToApply(entry) {
+      const existingTags = new Set(extractTags(`${entry.Comment || ""} ${entry.__localTag || ""}`));
+      return getSuggestedTags(entry).filter(tag => !existingTags.has(tag));
+    }
+
+    function addTagToEntry(entry, tag) {
+      const clean = cleanTag(tag);
+      if (!clean) return false;
+      const tags = unique([...(entry.__localTag || "").split(/\s+/).filter(Boolean).map(cleanTag), clean].filter(Boolean));
+      entry.__localTag = tags.join(" ");
+      return true;
+    }
+
+    function getSuggestionRuleKey(context, tag, type) {
+      return [type, context.project, context.timecode, cleanTag(tag)].join("||");
+    }
+
+    function upsertSuggestionRule(entry, tag, type = "suggest") {
+      const context = getSuggestionContext(entry);
+      const clean = cleanTag(tag);
+      if (!clean || (!context.project && !context.timecode)) return false;
+
+      const cleanType = type === "avoid" ? "avoid" : "suggest";
+      const rule = { type: cleanType, project: context.project, timecode: context.timecode, tag: clean };
+      const key = getSuggestionRuleKey(context, clean, cleanType);
+      const existing = state.suggestionRules.find(item => {
+        const current = ensureSuggestionRule(item);
+        return current && getSuggestionRuleKey(current, current.tag, current.type) === key;
+      });
+
+      if (existing) {
+        existing.count = Number(existing.count || 0) + 1;
+        existing.updatedAt = new Date().toISOString();
+      } else {
+        state.suggestionRules.push({ ...rule, count: 1, updatedAt: new Date().toISOString() });
+      }
+
+      const oppositeType = cleanType === "suggest" ? "avoid" : "suggest";
+      const oppositeKey = getSuggestionRuleKey(context, clean, oppositeType);
+      state.suggestionRules = state.suggestionRules.filter(item => {
+        const current = ensureSuggestionRule(item);
+        return current && getSuggestionRuleKey(current, current.tag, current.type) !== oppositeKey;
+      });
+      return true;
+    }
+
+    function learnSuggestionRulesFromEntries(entries) {
+      let learned = 0;
+      entries.forEach(entry => {
+        const tags = unique(extractTags(`${entry.__localTag || ""}`));
+        tags.forEach(tag => {
+          if (upsertSuggestionRule(entry, tag, "suggest")) learned += 1;
+        });
+      });
+      return learned;
+    }
+
+    function getFilteredPendingPairs() {
+      return filterPairs(getEntryPairs(state.pendingEntries, "review"), {
+        search: els.pendingSearch.value,
+        project: els.pendingProjectFilter.value,
+        timecode: els.pendingTimecodeFilter.value,
+        tag: els.pendingTagFilter.value
+      });
+    }
+
+    function getPendingSuggestionCount(pairs = getEntryPairs(state.pendingEntries, "review")) {
+      return pairs.reduce((count, { entry }) => count + getSuggestedTagsToApply(entry).length, 0);
+    }
+
+    function applyVisibleSuggestions() {
+      const pairs = getFilteredPendingPairs();
+      let applied = 0;
+      pairs.forEach(({ entry }) => {
+        getSuggestedTagsToApply(entry).forEach(tag => {
+          if (addTagToEntry(entry, tag)) applied += 1;
+        });
+      });
+
+      if (!applied) {
+        showReviewNotice("There are no visible tag suggestions to apply.", "warn");
+        return;
+      }
+
+      saveState();
+      showReviewNotice(`Applied ${applied} tag suggestion${applied === 1 ? "" : "s"} to the current review.`);
+      render();
+    }
+
+    function clearSuggestionRules() {
+      if (!state.suggestionRules.length) {
+        showReviewNotice("There are no saved suggestion rules to clear.", "warn");
+        return;
+      }
+      const ok = confirm("Clear all saved tag suggestion rules? This does not remove tags already added to rows or saved in reviewed CSVs.");
+      if (!ok) return;
+      state.suggestionRules = [];
+      saveState();
+      saveRulesToConnectedFolder({ showMessage: false, requestPermission: false });
+      render();
+    }
+
+    function getAssignment(entry, source) {
+      const originalProject = normalize(entry["Project Name"]) || "No project";
+      const tags = unique(extractTags(`${entry.Comment || ""} ${entry.__localTag || ""} ${entry.__historicTags || ""}`));
+      const ruleMap = getRuleMap();
+
+      if (source === "historic" && entry.__storedAssignedGroup) {
+        return {
+          group: entry.__storedAssignedGroup,
+          assignedBy: entry.__storedAssignedBy || "Reviewed CSV",
+          source: entry.__storedAssignmentSource || "Reviewed CSV",
+          hasUnmappedTag: tags.some(tag => !ruleMap.has(tag)),
+          tags
+        };
+      }
+
+      const mappedTag = tags.find(tag => ruleMap.has(tag));
+      if (mappedTag) {
+        return {
+          group: ruleMap.get(mappedTag),
+          assignedBy: mappedTag,
+          source: "Tag rule",
+          hasUnmappedTag: tags.some(tag => !ruleMap.has(tag)),
+          tags
+        };
+      }
+
+      if (entry.__storedAssignedGroup) {
+        return {
+          group: entry.__storedAssignedGroup,
+          assignedBy: entry.__storedAssignedBy || "Reviewed CSV",
+          source: entry.__storedAssignmentSource || "Reviewed CSV",
+          hasUnmappedTag: tags.some(tag => !ruleMap.has(tag)),
+          tags
+        };
+      }
+
+      return {
+        group: originalProject,
+        assignedBy: "Project Name",
+        source: tags.length ? "Unmapped tag" : "Project Name",
+        hasUnmappedTag: tags.some(tag => !ruleMap.has(tag)),
+        tags
+      };
+    }
+
+    function getEntryPairs(entries, source) {
+      return entries.map(entry => ({ entry, assignment: getAssignment(entry, source), source }));
+    }
+
+    function filterPairs(pairs, filter) {
+      const query = String(filter.search || "").trim().toLowerCase();
+      const project = filter.project || "";
+      const timecode = filter.timecode || "";
+      const tag = filter.tag || "";
+      const from = filter.from || "";
+      const to = filter.to || "";
+
+      return pairs.filter(({ entry, assignment }) => {
+        const date = toDateInputValue(entry.Date);
+        if (from && (!date || date < from)) return false;
+        if (to && (!date || date > to)) return false;
+
+        if (project) {
+          const originalProject = normalize(entry["Project Name"]);
+          if (originalProject !== project && assignment.group !== project) return false;
+        }
+
+        if (timecode && normalize(entry["Timecode Name"]) !== timecode) return false;
+        if (tag && !assignment.tags.includes(tag)) return false;
+        if (!query) return true;
+
+        const haystack = [
+          entry.Date, entry["Project Name"], entry["Timecode Name"], entry.Comment,
+          entry.__localTag, entry.__sourceFile, assignment.group, assignment.assignedBy,
+          assignment.source, assignment.tags.join(" ")
+        ].join(" ").toLowerCase();
+
+        return haystack.includes(query);
+      });
+    }
+
+    function render() {
+      const pendingPairs = getEntryPairs(state.pendingEntries, "review");
+      const historicPairs = getEntryPairs(state.historicEntries, "historic");
+
+      const filteredPending = filterPairs(pendingPairs, {
+        search: els.pendingSearch.value,
+        project: els.pendingProjectFilter.value,
+        timecode: els.pendingTimecodeFilter.value,
+        tag: els.pendingTagFilter.value
+      });
+
+      const filteredHistoric = filterPairs(historicPairs, {
+        search: els.historicSearch.value,
+        from: els.historicFrom.value,
+        to: els.historicTo.value,
+        project: els.historicProjectFilter.value,
+        timecode: els.historicTimecodeFilter.value,
+        tag: els.historicTagFilter.value
+      });
+
+      populateSelect(els.pendingProjectFilter, "All projects and groups", getProjectAndGroupOptions(pendingPairs), els.pendingProjectFilter.value);
+      populateSelect(els.pendingTimecodeFilter, "All timecodes", getTimecodeOptions(pendingPairs), els.pendingTimecodeFilter.value);
+      populateSelect(els.pendingTagFilter, "All tags", getTagOptions(pendingPairs), els.pendingTagFilter.value);
+      populateSelect(els.historicProjectFilter, "All projects and groups", getProjectAndGroupOptions(historicPairs), els.historicProjectFilter.value);
+      populateSelect(els.historicTimecodeFilter, "All timecodes", getTimecodeOptions(historicPairs), els.historicTimecodeFilter.value);
+      populateSelect(els.historicTagFilter, "All tags", getTagOptions(historicPairs), els.historicTagFilter.value);
+
+      const pendingGroups = groupPairs(filteredPending);
+      const historicGroups = groupPairs(filteredHistoric);
+      const visibleSuggestionCount = getPendingSuggestionCount(filteredPending);
+      const historyTags = getTagOptions(historicPairs);
+      const sourceFiles = unique(state.historicEntries.map(entry => entry.__sourceFile).filter(Boolean));
+
+      els.reviewBadge.textContent = String(state.pendingEntries.length);
+      els.historicBadge.textContent = String(state.historicEntries.length);
+      els.pendingCount.textContent = String(state.pendingEntries.length);
+      els.suggestionCount.textContent = String(visibleSuggestionCount);
+      els.historicCount.textContent = String(state.historicEntries.length);
+      els.historicFilteredCount.textContent = String(filteredHistoric.length);
+      els.historicCsvCount.textContent = String(sourceFiles.length || (state.historicEntries.length ? 1 : 0));
+      els.historicTagCount.textContent = String(historyTags.length);
+
+      const summary = state.lastImportSummary || {};
+      els.skippedHistoricCount.textContent = String(summary.skippedHistoric || 0);
+      els.skippedFileCount.textContent = String(summary.skippedRepeatedInFile || 0);
+      els.currentReviewLabel.textContent = state.pendingFileName
+        ? `${state.pendingFileName} is open in Step 1. Export the reviewed CSV when you are finished.`
+        : "No CSV is currently being reviewed.";
+
+      renderRules();
+      renderSuggestionRules();
+      renderTagOptions();
+      renderProjectOptions();
+      renderUnmappedTags(pendingPairs);
+
+      renderGroups(els.pendingGroups, filteredPending, {
+        source: "review",
+        emptyNoData: "No current CSV review. Choose a time recording CSV and click Assess CSV.",
+        emptyFiltered: "No rows in the current review match these filters."
+      });
+
+      renderGroups(els.historicGroups, filteredHistoric, {
+        source: "historic",
+        emptyNoData: "No historic CSV rows are loaded. Choose or sync the folder where you store exported reviewed CSVs.",
+        emptyFiltered: "No historic rows match these filters."
+      });
+
+      updateFolderStatus();
+      renderViewState();
+    }
+
+    function populateSelect(select, allLabel, options, selectedValue) {
+      const validOptions = new Set(options);
+      const value = selectedValue && validOptions.has(selectedValue) ? selectedValue : "";
+      select.innerHTML = [`<option value="">${escapeHtml(allLabel)}</option>`]
+        .concat(options.map(option => `<option value="${escapeAttr(option)}">${escapeHtml(option)}</option>`))
+        .join("");
+      select.value = value;
+    }
+
+    function getProjectAndGroupOptions(pairs) {
+      const options = new Set();
+      pairs.forEach(({ entry, assignment }) => {
+        const project = normalize(entry["Project Name"]);
+        if (project) options.add(project);
+        if (assignment.group) options.add(assignment.group);
+      });
+      state.tagRules.forEach(rule => {
+        if (rule.target) options.add(rule.target);
+      });
+      return Array.from(options).sort((a, b) => a.localeCompare(b));
+    }
+
+    function getTimecodeOptions(pairs) {
+      const options = new Set();
+      pairs.forEach(({ entry }) => {
+        const timecode = normalize(entry["Timecode Name"]);
+        if (timecode) options.add(timecode);
+      });
+      return Array.from(options).sort((a, b) => a.localeCompare(b));
+    }
+
+    function getTagOptions(pairs) {
+      const options = new Set();
+      pairs.forEach(({ assignment }) => assignment.tags.forEach(tag => options.add(tag)));
+      state.tagRules.forEach(rule => {
+        const tag = cleanTag(rule.tag);
+        if (tag) options.add(tag);
+      });
+      state.suggestionRules.forEach(rule => {
+        const cleanRule = ensureSuggestionRule(rule);
+        if (cleanRule) options.add(cleanRule.tag);
+      });
+      return Array.from(options).sort((a, b) => a.localeCompare(b));
+    }
+
+    function groupPairs(pairs) {
+      const groups = new Map();
+      pairs.forEach(pair => {
+        const name = pair.assignment.group || "No project";
+        if (!groups.has(name)) groups.set(name, { name, entries: [] });
+        groups.get(name).entries.push(pair);
+      });
+      return Array.from(groups.values()).sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    function renderGroups(container, pairs, options) {
+      const baseCollection = options.source === "review" ? state.pendingEntries : state.historicEntries;
+      if (!baseCollection.length) {
+        container.innerHTML = `<div class="card empty">${escapeHtml(options.emptyNoData)}</div>`;
+        return;
+      }
+
+      if (!pairs.length) {
+        container.innerHTML = `<div class="card empty">${escapeHtml(options.emptyFiltered)}</div>`;
+        return;
+      }
+
+      const groups = groupPairs(pairs);
+      container.innerHTML = groups.map(group => {
+        const rows = group.entries
+          .sort((a, b) => compareEntryDate(a.entry, b.entry) || String(a.entry.Comment || "").localeCompare(String(b.entry.Comment || "")))
+          .map(pair => renderEntryRow(pair.entry, pair.assignment, options.source))
+          .join("");
+
+        const sourceHeader = options.source === "historic" ? "<th>Source CSV</th>" : "";
+        const suggestionHeader = options.source === "review" ? "<th>Suggested tags</th>" : "";
+        return `
+          <details class="group" open>
+            <summary>
+              <span>
+                <span class="group-name">${escapeHtml(group.name)}</span><br>
+                <span class="group-meta">${group.entries.length} row${group.entries.length === 1 ? "" : "s"}</span>
+              </span>
+              <span class="group-meta">Open</span>
+            </summary>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Project</th>
+                    <th>Timecode</th>
+                    <th>Comment</th>
+                    <th>Tags</th>
+                    ${suggestionHeader}
+                    <th>${options.source === "review" ? "Local tag" : "Reviewed tag"}</th>
+                    <th>Assigned group</th>
+                    <th>Assigned by</th>
+                    ${sourceHeader}
+                  </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </div>
+          </details>
+        `;
+      }).join("");
+    }
+
+    function renderEntryRow(entry, assignment, source) {
+      const statusClass = assignment.source === "Tag rule" ? "rule" : assignment.source === "Reviewed CSV" ? "stored" : assignment.hasUnmappedTag ? "unmapped" : "default";
+      const tagsHtml = assignment.tags.length
+        ? assignment.tags.map(tag => `<span class="tag-pill">${escapeHtml(tag)}</span>`).join(" ")
+        : `<span class="muted">None</span>`;
+
+      const suggestionCell = source === "review" ? `<td class="suggestion-cell">${renderSuggestionCell(entry)}</td>` : "";
+      const localTagCell = source === "review"
+        ? `<input data-local-tag="true" data-entry-id="${escapeAttr(entry.__id)}" list="tagOptions" type="text" value="${escapeAttr(entry.__localTag || "")}" placeholder="#tag" />`
+        : (entry.__localTag ? `<span class="tag-pill">${escapeHtml(entry.__localTag)}</span>` : `<span class="muted">None</span>`);
+
+      const sourceCell = source === "historic" ? `<td class="file">${escapeHtml(entry.__sourceFile || "")}</td>` : "";
+
+      return `
+        <tr>
+          <td>${escapeHtml(entry.Date || "")}</td>
+          <td class="project">${escapeHtml(entry["Project Name"] || "")}</td>
+          <td class="timecode">${escapeHtml(entry["Timecode Name"] || "")}</td>
+          <td class="comment">${linkifyTags(escapeHtml(entry.Comment || ""))}</td>
+          <td class="tag-cell">${tagsHtml}</td>
+          ${suggestionCell}
+          <td class="local-tag">${localTagCell}</td>
+          <td class="project">${escapeHtml(assignment.group || "")}</td>
+          <td><span class="status-pill ${statusClass}">${escapeHtml(assignment.assignedBy)}</span></td>
+          ${sourceCell}
+        </tr>
+      `;
+    }
+
+    function renderSuggestionCell(entry) {
+      const suggestions = getSuggestedTagsToApply(entry);
+      const allSuggestions = getSuggestedTags(entry);
+      if (!allSuggestions.length) return `<span class="muted">None</span>`;
+      if (!suggestions.length) return `<span class="status-pill stored">Already applied</span>`;
+      return `<div class="suggestion-list">${suggestions.map(tag => `
+        <span class="suggestion-chip">
+          ${escapeHtml(tag)}
+          <button class="small" data-entry-id="${escapeAttr(entry.__id)}" data-apply-suggested-tag="${escapeAttr(tag)}" type="button">Use</button>
+          <button class="small dismiss" data-entry-id="${escapeAttr(entry.__id)}" data-dismiss-suggested-tag="${escapeAttr(tag)}" type="button">Do not suggest</button>
+        </span>
+      `).join("")}</div>`;
+    }
+
+    function renderRules() {
+      if (!state.tagRules.length) {
+        els.ruleList.innerHTML = `<p class="muted">No tag rules yet.</p>`;
+        return;
+      }
+
+      els.ruleList.innerHTML = state.tagRules.map((rule, index) => `
+        <div class="rule">
+          <span class="tag-pill">${escapeHtml(rule.tag)}</span>
+          <span>${escapeHtml(rule.target)}</span>
+          <button class="secondary small" data-remove-rule="${index}" type="button" aria-label="Remove ${escapeAttr(rule.tag)}">Remove</button>
+        </div>
+      `).join("");
+    }
+
+    function renderSuggestionRules() {
+      if (!state.suggestionRules.length) {
+        els.suggestionRuleList.innerHTML = `<p class="muted">No saved tag suggestions yet. Add local tags during review, then export the reviewed CSV to teach the app for next time.</p>`;
+        return;
+      }
+
+      const rules = state.suggestionRules
+        .map((rule, index) => ({ rule: ensureSuggestionRule(rule), index }))
+        .filter(item => item.rule)
+        .sort((a, b) => a.rule.type.localeCompare(b.rule.type) || a.rule.project.localeCompare(b.rule.project) || a.rule.timecode.localeCompare(b.rule.timecode) || a.rule.tag.localeCompare(b.rule.tag));
+
+      els.suggestionRuleList.innerHTML = rules.map(({ rule, index }) => {
+        const action = rule.type === "avoid" ? "Do not suggest" : "Suggest";
+        const context = [rule.project, rule.timecode].filter(Boolean).join(" / ");
+        return `
+          <div class="rule">
+            <span class="tag-pill">${escapeHtml(rule.tag)}</span>
+            <span><strong>${escapeHtml(action)}</strong><br><span class="muted">${escapeHtml(context || "Any project/timecode")}</span></span>
+            <button class="secondary small" data-remove-suggestion-rule="${index}" type="button" aria-label="Remove suggestion rule">Remove</button>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderTagOptions() {
+      const allPairs = [
+        ...getEntryPairs(state.pendingEntries, "review"),
+        ...getEntryPairs(state.historicEntries, "historic")
+      ];
+      const options = getTagOptions(allPairs);
+      els.tagOptions.innerHTML = options.map(tag => `<option value="${escapeAttr(tag)}"></option>`).join("");
+    }
+
+    function renderProjectOptions() {
+      const options = new Set();
+      [...state.pendingEntries, ...state.historicEntries].forEach(entry => {
+        const project = normalize(entry["Project Name"]);
+        if (project) options.add(project);
+        if (entry.__storedAssignedGroup) options.add(entry.__storedAssignedGroup);
+      });
+      state.tagRules.forEach(rule => {
+        if (rule.target) options.add(rule.target);
+      });
+      els.projectOptions.innerHTML = Array.from(options).sort().map(project => `<option value="${escapeAttr(project)}"></option>`).join("");
+    }
+
+    function renderUnmappedTags(pairs) {
+      const ruleMap = getRuleMap();
+      const unmapped = new Map();
+      pairs.forEach(({ assignment }) => {
+        assignment.tags.forEach(tag => {
+          if (!ruleMap.has(tag)) unmapped.set(tag, (unmapped.get(tag) || 0) + 1);
+        });
+      });
+
+      if (!unmapped.size) {
+        els.unmappedTags.innerHTML = `<span class="muted">No unmapped tags found in the current review.</span>`;
+        return;
+      }
+
+      els.unmappedTags.innerHTML = Array.from(unmapped.entries())
+        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+        .map(([tag, count]) => `<button class="secondary small" data-use-tag="${escapeAttr(tag)}" type="button">${escapeHtml(tag)} (${count})</button>`)
+        .join("");
+    }
+
+    function getOriginalHeaders(entries) {
+      const headers = [];
+      entries.forEach(entry => {
+        Object.keys(entry).forEach(key => {
+          if (key.startsWith("__")) return;
+          if (REVIEW_EXPORT_FIELDS.includes(key)) return;
+          if (key === "Source CSV") return;
+          if (!headers.includes(key)) headers.push(key);
+        });
+      });
+      return headers;
+    }
+
+    function buildReviewedCsv(entries) {
+      const originalHeaders = getOriginalHeaders(entries);
+      const extraHeaders = ["Local Tag", "Detected Tags", "Assigned Group", "Assigned By", "Assignment Source"];
+      const headers = [...originalHeaders, ...extraHeaders];
+
+      const rows = entries.map(entry => {
+        const assignment = getAssignment(entry, "review");
+        const output = { ...entry };
+        output["Local Tag"] = entry.__localTag || "";
+        output["Detected Tags"] = assignment.tags.join(" ");
+        output["Assigned Group"] = assignment.group;
+        output["Assigned By"] = assignment.assignedBy;
+        output["Assignment Source"] = assignment.source;
+        return headers.map(header => output[header] || "");
+      });
+
+      const csv = [headers, ...rows].map(row => row.map(escapeCsv).join(",")).join("\r\n");
+      const sourceStem = safeFileStem(state.pendingFileName || "time-recording");
+      const stamp = new Date().toISOString().replace(/[-:]/g, "").slice(0, 15);
+      const fileName = `${sourceStem}-reviewed-${stamp}.csv`;
+      return { csv, fileName };
+    }
+
+    async function downloadReviewedCsv() {
+      if (!state.pendingEntries.length) {
+        showReviewNotice("There are no current review rows to export.", "warn");
+        return;
+      }
+
+      const learned = learnSuggestionRulesFromEntries(state.pendingEntries);
+      const { csv, fileName } = buildReviewedCsv(state.pendingEntries);
+      saveState();
+      downloadCsv(csv, fileName);
+      const rulesSaved = await saveRulesToConnectedFolder({ showMessage: false, requestPermission: false });
+      const rulesMessage = rulesSaved
+        ? ` Rules were also saved to ${RULES_FILE_NAME}.`
+        : " Connect your historic CSV folder and use Save rules to folder so suggestions can follow the CSV exports.";
+      showReviewNotice(`Downloaded ${fileName}. Learned ${learned} tag suggestion rule update${learned === 1 ? "" : "s"}.${rulesMessage}`);
+      render();
+    }
+
+    async function exportReviewedCsvToFolder() {
+      if (!state.pendingEntries.length) {
+        showReviewNotice("There are no current review rows to export.", "warn");
+        return;
+      }
+
+      const handle = await getConnectedDirectoryHandle();
+      if (!handle) {
+        showReviewNotice("Choose your historic CSV folder in Step 2 first, then come back and export to folder.", "warn");
+        return;
+      }
+
+      const permitted = await ensureDirectoryPermission(handle, "readwrite");
+      if (!permitted) {
+        showReviewNotice("The browser did not grant write access to the historic CSV folder. Use Download reviewed CSV instead.", "warn");
+        return;
+      }
+
+      const learned = learnSuggestionRulesFromEntries(state.pendingEntries);
+      const { csv, fileName } = buildReviewedCsv(state.pendingEntries);
+      saveState();
+      await saveRulesToDirectory(handle);
+      const fileHandle = await handle.getFileHandle(fileName, { create: true });
+      const writable = await fileHandle.createWritable();
+      await writable.write(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+      await writable.close();
+      showReviewNotice(`Saved ${fileName} to the historic CSV folder. Learned ${learned} tag suggestion rule update${learned === 1 ? "" : "s"} and saved rules to ${RULES_FILE_NAME}.`);
+      await syncHistoricCsvFolder({ silent: true });
+      render();
+    }
+
+    function downloadCsv(csv, fileName) {
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function folderApiSupported() {
+      return "showDirectoryPicker" in window && "indexedDB" in window;
+    }
+
+    function updateFolderStatus() {
+      const supported = folderApiSupported();
+      [els.connectFolderBtn, els.syncFolderBtn, els.forgetFolderBtn, els.exportReviewToFolderBtn, els.saveRulesToFolderBtn].forEach(button => {
+        if (button) button.disabled = !supported;
+      });
+
+      if (!supported) {
+        els.folderStatus.textContent = "Folder sync is not supported in this browser. Use Chrome or Edge, or download reviewed CSVs manually.";
+        els.folderStatus.classList.remove("success");
+        els.folderStatus.classList.add("warn");
+        els.exportReviewToFolderBtn.disabled = true;
+        els.saveRulesToFolderBtn.disabled = true;
+        updateRulesFileStatus();
+        return;
+      }
+
+      const folderName = state.historicCsvFolderName || (currentDirectoryHandle && currentDirectoryHandle.name) || "";
+      const hasFolder = Boolean(folderName);
+      els.syncFolderBtn.disabled = !hasFolder;
+      els.forgetFolderBtn.disabled = !hasFolder;
+      els.exportReviewToFolderBtn.disabled = !hasFolder;
+      els.saveRulesToFolderBtn.disabled = !hasFolder;
+
+      if (!hasFolder) {
+        els.folderStatus.textContent = "No historic CSV folder connected. Choose the folder where reviewed CSV exports and rules are stored.";
+        els.folderStatus.classList.remove("success");
+        els.folderStatus.classList.add("warn");
+        updateRulesFileStatus();
+        return;
+      }
+
+      const lastSync = state.lastHistoricFolderSync ? new Date(state.lastHistoricFolderSync).toLocaleString() : "not synced yet";
+      const summary = state.lastHistoricSyncSummary;
+      const summaryText = summary ? ` Loaded ${summary.reviewedCsvFiles} reviewed CSV file${summary.reviewedCsvFiles === 1 ? "" : "s"}.` : "";
+      els.folderStatus.textContent = `Connected folder: ${folderName}. Last sync: ${lastSync}.${summaryText}`;
+      els.folderStatus.classList.remove("warn");
+      els.folderStatus.classList.add("success");
+      updateRulesFileStatus();
+    }
+
+    function updateRulesFileStatus() {
+      if (!els.rulesFileStatus) return;
+      const folderName = state.historicCsvFolderName || (currentDirectoryHandle && currentDirectoryHandle.name) || "";
+      els.rulesFileStatus.classList.remove("success", "warn");
+
+      if (!folderApiSupported()) {
+        els.rulesFileStatus.textContent = "Rules folder storage is not supported in this browser. Use Chrome or Edge for the shared rules file.";
+        els.rulesFileStatus.classList.add("warn");
+        return;
+      }
+
+      if (!folderName) {
+        els.rulesFileStatus.textContent = `Rules are currently cached in this browser. Choose your historic CSV folder to store them in ${RULES_FILE_NAME}.`;
+        els.rulesFileStatus.classList.add("warn");
+        return;
+      }
+
+      const loaded = state.lastRulesFileSync ? ` Loaded: ${new Date(state.lastRulesFileSync).toLocaleString()}.` : " Not loaded yet.";
+      const saved = state.lastRulesFileSave ? ` Saved: ${new Date(state.lastRulesFileSave).toLocaleString()}.` : " Not saved yet.";
+      els.rulesFileStatus.textContent = `Rules file: ${RULES_FILE_NAME} in ${folderName}.${loaded}${saved}`;
+      els.rulesFileStatus.classList.add(state.lastRulesFileSave || state.lastRulesFileSync ? "success" : "warn");
+    }
+
+    async function readRulesFromDirectory(handle) {
+      try {
+        const fileHandle = await handle.getFileHandle(RULES_FILE_NAME);
+        const file = await fileHandle.getFile();
+        const text = await file.text();
+        const payload = JSON.parse(text);
+        const merged = mergeRulesFromPayload(payload);
+        state.lastRulesFileSync = new Date().toISOString();
+        saveState();
+        return { found: true, merged };
+      } catch (error) {
+        if (error && error.name === "NotFoundError") return { found: false, merged: { tagRules: 0, suggestionRules: 0 } };
+        console.warn("Unable to read rules file", error);
+        return { found: false, error, merged: { tagRules: 0, suggestionRules: 0 } };
+      }
+    }
+
+    async function saveRulesToDirectory(handle) {
+      const payload = buildRulesPayload();
+      const fileHandle = await handle.getFileHandle(RULES_FILE_NAME, { create: true });
+      const writable = await fileHandle.createWritable();
+      await writable.write(new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" }));
+      await writable.close();
+      state.lastRulesFileSave = new Date().toISOString();
+      saveState();
+      return true;
+    }
+
+    async function saveRulesToConnectedFolder({ showMessage = false, requestPermission = true } = {}) {
+      const handle = await getConnectedDirectoryHandle();
+      if (!handle) {
+        if (showMessage) showReviewNotice("Choose your historic CSV folder before saving rules to the folder.", "warn");
+        updateRulesFileStatus();
+        return false;
+      }
+
+      const options = { mode: "readwrite" };
+      let permitted = await handle.queryPermission(options);
+      if (permitted !== "granted" && requestPermission) permitted = await handle.requestPermission(options);
+      if (permitted !== "granted") {
+        if (showMessage) showReviewNotice("The browser has not granted write access to the historic CSV folder, so the rules file was not saved.", "warn");
+        updateRulesFileStatus();
+        return false;
+      }
+
+      try {
+        await saveRulesToDirectory(handle);
+        if (showMessage) showReviewNotice(`Saved tag rules and suggestion rules to ${RULES_FILE_NAME} in your historic CSV folder.`, "success");
+        render();
+        return true;
+      } catch (error) {
+        console.warn("Unable to save rules file", error);
+        if (showMessage) showReviewNotice("The rules file could not be saved to the historic CSV folder.", "warn");
+        updateRulesFileStatus();
+        return false;
+      }
+    }
+
+    async function connectHistoricCsvFolder() {
+      if (!folderApiSupported()) {
+        showReviewNotice("This browser does not support choosing a persistent folder. Use Chrome or Edge for folder sync.", "warn");
+        return;
+      }
+
+      const handle = await window.showDirectoryPicker({ mode: "readwrite" });
+      currentDirectoryHandle = handle;
+      state.historicCsvFolderName = handle.name;
+      await saveDirectoryHandle(handle);
+      saveState();
+      const rulesLoad = await readRulesFromDirectory(handle);
+      if (!rulesLoad.found && (state.tagRules.length || state.suggestionRules.length)) {
+        await saveRulesToDirectory(handle);
+      }
+      await syncHistoricCsvFolder({ silent: false });
+    }
+
+    async function syncHistoricCsvFolder({ silent = false } = {}) {
+      const handle = await getConnectedDirectoryHandle();
+      if (!handle) {
+        if (!silent) alert("Choose a historic CSV folder first.");
+        updateFolderStatus();
+        return;
+      }
+
+      const permitted = await ensureDirectoryPermission(handle, "read");
+      if (!permitted) {
+        if (!silent) alert("The browser needs permission before it can read the connected folder. Click Sync folder and allow access.");
+        updateFolderStatus();
+        return;
+      }
+
+      const rulesLoad = await readRulesFromDirectory(handle);
+      const loadedEntries = [];
+      const existing = new Set();
+      let csvFiles = 0;
+      let reviewedCsvFiles = 0;
+      let ignoredCsvFiles = 0;
+      let duplicates = 0;
+
+      for await (const [, childHandle] of handle.entries()) {
+        if (childHandle.kind !== "file" || !childHandle.name.toLowerCase().endsWith(".csv")) continue;
+        csvFiles += 1;
+        const file = await childHandle.getFile();
+        const text = await file.text();
+        const rows = parseCsvToObjects(text);
+        if (!looksLikeReviewedExport(rows)) {
+          ignoredCsvFiles += 1;
+          continue;
+        }
+
+        reviewedCsvFiles += 1;
+        rows.forEach(row => {
+          const entry = ensureEntryId({ ...row, __sourceFile: childHandle.name });
+          if (existing.has(entry.__id)) {
+            duplicates += 1;
+            return;
+          }
+          existing.add(entry.__id);
+          loadedEntries.push(entry);
+        });
+      }
+
+      state.historicEntries = loadedEntries;
+      state.historicCsvFolderName = handle.name;
+      state.lastHistoricFolderSync = new Date().toISOString();
+      state.lastHistoricSyncSummary = { csvFiles, reviewedCsvFiles, ignoredCsvFiles, duplicates };
+      saveState();
+
+      if (!silent) {
+        const ignoredMessage = ignoredCsvFiles ? ` ${ignoredCsvFiles} CSV file${ignoredCsvFiles === 1 ? "" : "s"} ignored because they did not look like reviewed exports.` : "";
+        const rulesMessage = rulesLoad.found
+          ? ` Loaded rules from ${RULES_FILE_NAME}.`
+          : ` No ${RULES_FILE_NAME} file found yet.`;
+        alert(`Synced ${reviewedCsvFiles} reviewed CSV file${reviewedCsvFiles === 1 ? "" : "s"} from ${handle.name}. Loaded ${loadedEntries.length} row${loadedEntries.length === 1 ? "" : "s"}; skipped ${duplicates} duplicate row${duplicates === 1 ? "" : "s"}.${ignoredMessage}${rulesMessage}`);
+      }
+      render();
+    }
+
+    function looksLikeReviewedExport(rows) {
+      return rows.some(row => REVIEW_EXPORT_FIELDS.some(field => Object.prototype.hasOwnProperty.call(row, field)));
+    }
+
+    async function getConnectedDirectoryHandle() {
+      if (currentDirectoryHandle) return currentDirectoryHandle;
+      if (!folderApiSupported()) return null;
+      currentDirectoryHandle = await loadDirectoryHandle();
+      if (currentDirectoryHandle) {
+        state.historicCsvFolderName = currentDirectoryHandle.name;
+        saveState();
+      }
+      return currentDirectoryHandle;
+    }
+
+    async function ensureDirectoryPermission(handle, mode) {
+      const options = { mode };
+      if ((await handle.queryPermission(options)) === "granted") return true;
+      return (await handle.requestPermission(options)) === "granted";
+    }
+
+    async function forgetHistoricCsvFolder() {
+      currentDirectoryHandle = null;
+      state.historicCsvFolderName = "";
+      state.lastHistoricFolderSync = "";
+      state.lastHistoricSyncSummary = null;
+      state.lastRulesFileSync = "";
+      state.lastRulesFileSave = "";
+      await deleteDirectoryHandle();
+      saveState();
+      render();
+    }
+
+    function clearHistoricCache() {
+      const ok = confirm("Clear the historic rows cached in this browser? This does not delete any CSV files from your laptop.");
+      if (!ok) return;
+      state.historicEntries = [];
+      state.lastHistoricFolderSync = "";
+      state.lastHistoricSyncSummary = null;
+      saveState();
+      render();
+    }
+
+    async function initHistoricCsvFolder() {
+      updateFolderStatus();
+      const handle = await getConnectedDirectoryHandle();
+      if (!handle) {
+        updateFolderStatus();
+        return;
+      }
+
+      const permission = await handle.queryPermission({ mode: "read" });
+      if (permission === "granted") {
+        await syncHistoricCsvFolder({ silent: true });
+      } else {
+        updateFolderStatus();
+      }
+    }
+
+    function openHandleDb() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(HANDLE_DB_NAME, 1);
+        request.onupgradeneeded = () => {
+          const db = request.result;
+          if (!db.objectStoreNames.contains(HANDLE_STORE_NAME)) db.createObjectStore(HANDLE_STORE_NAME);
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    async function saveDirectoryHandle(handle) {
+      const db = await openHandleDb();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(HANDLE_STORE_NAME, "readwrite");
+        tx.objectStore(HANDLE_STORE_NAME).put(handle, HISTORIC_FOLDER_HANDLE_KEY);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    async function loadDirectoryHandle() {
+      const db = await openHandleDb();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(HANDLE_STORE_NAME, "readonly");
+        const request = tx.objectStore(HANDLE_STORE_NAME).get(HISTORIC_FOLDER_HANDLE_KEY);
+        request.onsuccess = () => resolve(request.result || null);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    async function deleteDirectoryHandle() {
+      const db = await openHandleDb();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(HANDLE_STORE_NAME, "readwrite");
+        tx.objectStore(HANDLE_STORE_NAME).delete(HISTORIC_FOLDER_HANDLE_KEY);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    function escapeCsv(value) {
+      const text = String(value ?? "");
+      if (/[",\r\n]/.test(text)) return `"${text.replace(/"/g, '""')}"`;
+      return text;
+    }
+
+    function safeFileStem(fileName) {
+      return String(fileName || "time-recording")
+        .replace(/\.csv$/i, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "") || "time-recording";
+    }
+
+    function showReviewNotice(message, kind = "info") {
+      els.reviewNotice.textContent = message;
+      els.reviewNotice.classList.remove("hidden", "warn", "success");
+      if (kind === "warn") els.reviewNotice.classList.add("warn");
+      if (kind === "success") els.reviewNotice.classList.add("success");
+    }
+
+    function normalize(value) {
+      return String(value || "").trim().replace(/\s+/g, " ");
+    }
+
+    function unique(values) {
+      return Array.from(new Set(values));
+    }
+
+    function toDateInputValue(value) {
+      const text = String(value || "").trim();
+      if (!text) return "";
+
+      const monthNames = {
+        jan: "01", january: "01",
+        feb: "02", february: "02",
+        mar: "03", march: "03",
+        apr: "04", april: "04",
+        may: "05",
+        jun: "06", june: "06",
+        jul: "07", july: "07",
+        aug: "08", august: "08",
+        sep: "09", sept: "09", september: "09",
+        oct: "10", october: "10",
+        nov: "11", november: "11",
+        dec: "12", december: "12"
+      };
+
+      let match = text.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/);
+      if (match) {
+        const day = match[1].padStart(2, "0");
+        const month = monthNames[match[2].toLowerCase()];
+        if (month) return `${match[3]}-${month}-${day}`;
+      }
+
+      match = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if (match) {
+        const day = match[1].padStart(2, "0");
+        const month = match[2].padStart(2, "0");
+        return `${match[3]}-${month}-${day}`;
+      }
+
+      match = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (match) return `${match[1]}-${match[2]}-${match[3]}`;
+
+      const parsed = new Date(text);
+      if (!Number.isNaN(parsed.getTime())) return parsed.toISOString().slice(0, 10);
+      return "";
+    }
+
+    function compareEntryDate(a, b) {
+      return toDateInputValue(a.Date).localeCompare(toDateInputValue(b.Date));
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function escapeAttr(value) {
+      return escapeHtml(value).replace(/`/g, "&#096;");
+    }
+
+    function linkifyTags(escapedText) {
+      return escapedText.replace(/(#[\p{L}\p{N}_-]+)/gu, '<span class="tag-pill">$1</span>');
+    }
+
+    render();
+    initHistoricCsvFolder().catch(error => {
+      console.warn("Unable to initialise historic CSV folder", error);
+      updateFolderStatus();
+    });
+  </script>
+</body>
+</html>
