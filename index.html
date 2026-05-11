@@ -468,6 +468,18 @@
       font-size: 0.96rem;
     }
 
+    .summary-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .status-pill.pending { background: #f3f4f6; color: #374151; }
+    .status-pill.progress { background: #dbeafe; color: #1d4ed8; }
+    .status-pill.done { background: #dcfce7; color: #166534; }
+
     .tag-editor {
       display: grid;
       gap: 8px;
@@ -804,18 +816,42 @@
       const entry = state.pendingEntries.find(item => item.__id === input.dataset.entryId);
       if (!entry) return;
       entry.__localTag = normalizeTagInput(input.value);
+      if (entry.__localTag) entry.__reviewed = true;
       input.value = entry.__localTag;
       saveState();
       render();
     });
 
     els.pendingGroups.addEventListener("click", event => {
+      const markReviewedButton = event.target.closest("[data-mark-timecode-reviewed]");
+      if (markReviewedButton) {
+        const key = markReviewedButton.dataset.markTimecodeReviewed;
+        state.pendingEntries.forEach(entry => {
+          if (getReviewGroupKey(entry) === key) entry.__reviewed = true;
+        });
+        saveState();
+        render();
+        return;
+      }
+
+      const resetReviewedButton = event.target.closest("[data-reset-timecode-reviewed]");
+      if (resetReviewedButton) {
+        const key = resetReviewedButton.dataset.resetTimecodeReviewed;
+        state.pendingEntries.forEach(entry => {
+          if (getReviewGroupKey(entry) === key) entry.__reviewed = false;
+        });
+        saveState();
+        render();
+        return;
+      }
+
       const applyButton = event.target.closest("[data-apply-suggested-tag]");
       if (applyButton) {
         const entry = state.pendingEntries.find(item => item.__id === applyButton.dataset.entryId);
         const tag = cleanTag(applyButton.dataset.applySuggestedTag);
         if (entry && tag) {
           addTagToEntry(entry, tag);
+          entry.__reviewed = true;
           saveState();
           render();
         }
@@ -970,6 +1006,7 @@
       const copy = { ...entry };
       if (!copy.__id) copy.__id = makeEntryId(copy);
       copy.__localTag = normalizeTagInput(copy.__localTag || copy["Local Tag"] || "");
+      copy.__reviewed = Boolean(copy.__reviewed || copy.__localTag);
       copy.__historicTags = normalizeTagInput(copy.__historicTags || copy["Detected Tags"] || "");
       copy.__storedAssignedGroup = normalize(copy.__storedAssignedGroup || copy["Assigned Group"] || "");
       copy.__storedAssignedBy = normalize(copy.__storedAssignedBy || copy["Assigned By"] || "");
@@ -1140,6 +1177,12 @@
     function makeEntryId(row) {
       const payload = CORE_FIELDS.map(field => [field, normalize(row[field])]);
       return hashString(JSON.stringify(payload));
+    }
+
+    function getReviewGroupKey(entry, assignment = null) {
+      const groupName = normalize((assignment && assignment.group) || entry.__storedAssignedGroup || entry["Project Name"] || "No project");
+      const timecode = normalize(entry["Timecode Name"]) || "No timecode";
+      return `${groupName}||${timecode}`;
     }
 
     function hashString(input) {
@@ -1562,7 +1605,8 @@
       return Array.from(groups.values())
         .map(group => ({
           ...group,
-          totalHours: sumEntryHours(group.entries)
+          totalHours: sumEntryHours(group.entries),
+          reviewState: getTimecodeReviewState(group.entries)
         }))
         .sort((a, b) => a.name.localeCompare(b.name));
     }
@@ -1590,6 +1634,17 @@
       return Number.isInteger(rounded) ? String(rounded) : String(rounded).replace(/(\.\d*?[1-9])0+$/, "$1");
     }
 
+    function getTimecodeReviewState(pairs) {
+      const total = pairs.length;
+      const tagged = pairs.filter(({ entry }) => Boolean(normalizeTagInput(entry.__localTag || ""))).length;
+      const reviewed = pairs.filter(({ entry }) => Boolean(entry.__reviewed || normalizeTagInput(entry.__localTag || ""))).length;
+      const remaining = Math.max(0, total - reviewed);
+      const done = remaining === 0;
+      const statusClass = done ? "done" : (reviewed > 0 || tagged > 0 ? "progress" : "pending");
+      const statusLabel = done ? "Reviewed" : (reviewed > 0 || tagged > 0 ? "In progress" : "Pending");
+      return { total, tagged, reviewed, remaining, done, statusClass, statusLabel };
+    }
+
     function renderGroups(container, pairs, options) {
       const baseCollection = options.source === "review" ? state.pendingEntries : state.historicEntries;
       if (!baseCollection.length) {
@@ -1604,6 +1659,7 @@
 
       const groups = groupPairs(pairs);
       container.innerHTML = groups.map(group => {
+        const completedTimecodes = group.timecodes.filter(item => item.reviewState.done).length;
         const reviewHeaders = `
           <th>Date</th>
           <th>Project</th>
@@ -1625,6 +1681,14 @@
           <th>Source CSV</th>
         `;
         const subgroups = group.timecodes.map(timecodeGroup => {
+          const reviewState = timecodeGroup.reviewState;
+          const reviewKey = getReviewGroupKey(timecodeGroup.entries[0].entry, timecodeGroup.entries[0].assignment);
+          const taggedText = reviewState.tagged ? ` · ${reviewState.tagged} tagged exception${reviewState.tagged === 1 ? "" : "s"}` : "";
+          const actionButton = options.source === "review"
+            ? (reviewState.done
+                ? `<button class="secondary small" data-reset-timecode-reviewed="${escapeAttr(reviewKey)}" type="button">Reset</button>`
+                : `<button class="small" data-mark-timecode-reviewed="${escapeAttr(reviewKey)}" type="button">Mark remaining reviewed</button>`)
+            : "";
           const rows = timecodeGroup.entries
             .sort((a, b) => compareEntryDate(a.entry, b.entry) || String(a.entry.Comment || "").localeCompare(String(b.entry.Comment || "")))
             .map(pair => renderEntryRow(pair.entry, pair.assignment, options.source))
@@ -1634,9 +1698,13 @@
               <summary>
                 <span>
                   <span class="subgroup-name">${escapeHtml(timecodeGroup.name)}</span><br>
-                  <span class="group-meta">${timecodeGroup.entries.length} row${timecodeGroup.entries.length === 1 ? "" : "s"} · ${formatHours(timecodeGroup.totalHours)} hours</span>
+                  <span class="group-meta">${timecodeGroup.entries.length} row${timecodeGroup.entries.length === 1 ? "" : "s"} · ${formatHours(timecodeGroup.totalHours)} hours${taggedText}</span>
                 </span>
-                <span class="group-toggle" aria-hidden="true"></span>
+                <span class="summary-actions">
+                  <span class="status-pill ${reviewState.statusClass}">${escapeHtml(reviewState.statusLabel)}</span>
+                  ${actionButton}
+                  <span class="group-toggle" aria-hidden="true"></span>
+                </span>
               </summary>
               <div class="table-wrap">
                 <table>
@@ -1655,7 +1723,7 @@
             <summary>
               <span>
                 <span class="group-name">${escapeHtml(group.name)}</span><br>
-                <span class="group-meta">${group.entries.length} row${group.entries.length === 1 ? "" : "s"} · ${formatHours(group.totalHours)} hours across ${group.timecodes.length} timecode${group.timecodes.length === 1 ? "" : "s"}</span>
+                <span class="group-meta">${group.entries.length} row${group.entries.length === 1 ? "" : "s"} · ${formatHours(group.totalHours)} hours across ${group.timecodes.length} timecode${group.timecodes.length === 1 ? "" : "s"} · ${completedTimecodes}/${group.timecodes.length} reviewed</span>
               </span>
               <span class="group-toggle" aria-hidden="true"></span>
             </summary>
