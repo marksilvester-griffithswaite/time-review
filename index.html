@@ -450,15 +450,12 @@
       font-size: 0.9rem;
     }
 
-    .table-wrap {
-      overflow: auto;
-      max-height: 68vh;
-    }
+    .table-wrap { overflow: auto; }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 1040px;
+      min-width: 0;
     }
 
     th, td {
@@ -481,10 +478,10 @@
     }
 
     tbody tr:hover { background: #f8fafc; }
-    td.project { min-width: 220px; }
-    td.timecode { min-width: 180px; }
-    td.comment { min-width: 330px; }
-    td.tag-cell { min-width: 150px; }
+    td.project { min-width: 240px; }
+    td.timecode { min-width: 170px; }
+    td.comment { min-width: 320px; }
+    td.tag-cell { min-width: 140px; }
     td.local-tag { min-width: 170px; }
     td.local-tag input { min-width: 140px; }
     td.file { min-width: 210px; }
@@ -558,14 +555,6 @@
             <datalist id="tagOptions"></datalist>
             <datalist id="projectOptions"></datalist>
             <div id="ruleList" class="rule-list"></div>
-          </section>
-
-          <section class="card stack">
-            <div>
-              <h2>Unmapped tags in current review</h2>
-              <p class="muted">Tags found in comments or local tag fields that do not yet have a rule.</p>
-            </div>
-            <div id="unmappedTags" class="row"></div>
           </section>
 
           <section class="card stack">
@@ -743,7 +732,6 @@
       ruleTarget: document.getElementById("ruleTarget"),
       addRuleBtn: document.getElementById("addRuleBtn"),
       ruleList: document.getElementById("ruleList"),
-      unmappedTags: document.getElementById("unmappedTags"),
       applySuggestionsBtn: document.getElementById("applySuggestionsBtn"),
       clearSuggestionRulesBtn: document.getElementById("clearSuggestionRulesBtn"),
       suggestionRuleList: document.getElementById("suggestionRuleList"),
@@ -866,13 +854,6 @@
       saveState();
       saveRulesToConnectedFolder({ showMessage: false, requestPermission: false });
       render();
-    });
-
-    els.unmappedTags.addEventListener("click", event => {
-      const button = event.target.closest("[data-use-tag]");
-      if (!button) return;
-      els.ruleTag.value = cleanTag(button.dataset.useTag);
-      els.ruleTarget.focus();
     });
 
     function loadState() {
@@ -1491,7 +1472,6 @@
       renderSuggestionRules();
       renderTagOptions();
       renderProjectOptions();
-      renderUnmappedTags(pendingPairs);
 
       renderGroups(els.pendingGroups, filteredPending, {
         source: "review",
@@ -1583,8 +1563,24 @@
           .map(pair => renderEntryRow(pair.entry, pair.assignment, options.source))
           .join("");
 
-        const sourceHeader = options.source === "historic" ? "<th>Source CSV</th>" : "";
-        const suggestionHeader = options.source === "review" ? "<th>Suggested tags</th>" : "";
+        const reviewHeaders = `
+          <th>Date</th>
+          <th>Project</th>
+          <th>Timecode</th>
+          <th>Comment</th>
+          <th>Tags</th>
+        `;
+        const historicHeaders = `
+          <th>Date</th>
+          <th>Project</th>
+          <th>Timecode</th>
+          <th>Comment</th>
+          <th>Tags</th>
+          <th>Reviewed tag</th>
+          <th>Assigned group</th>
+          <th>Assigned by</th>
+          <th>Source CSV</th>
+        `;
         return `
           <details class="group" open>
             <summary>
@@ -1597,18 +1593,7 @@
             <div class="table-wrap">
               <table>
                 <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Project</th>
-                    <th>Timecode</th>
-                    <th>Comment</th>
-                    <th>Tags</th>
-                    ${suggestionHeader}
-                    <th>${options.source === "review" ? "Local tag" : "Reviewed tag"}</th>
-                    <th>Assigned group</th>
-                    <th>Assigned by</th>
-                    ${sourceHeader}
-                  </tr>
+                  <tr>${options.source === "review" ? reviewHeaders : historicHeaders}</tr>
                 </thead>
                 <tbody>${rows}</tbody>
               </table>
@@ -1624,12 +1609,22 @@
         ? assignment.tags.map(tag => `<span class="tag-pill">${escapeHtml(tag)}</span>`).join(" ")
         : `<span class="muted">None</span>`;
 
-      const suggestionCell = source === "review" ? `<td class="suggestion-cell">${renderSuggestionCell(entry)}</td>` : "";
-      const localTagCell = source === "review"
-        ? `<input data-local-tag="true" data-entry-id="${escapeAttr(entry.__id)}" list="tagOptions" type="text" value="${escapeAttr(entry.__localTag || "")}" placeholder="#tag" />`
-        : (entry.__localTag ? `<span class="tag-pill">${escapeHtml(entry.__localTag)}</span>` : `<span class="muted">None</span>`);
+      if (source === "review") {
+        return `
+          <tr>
+            <td>${escapeHtml(entry.Date || "")}</td>
+            <td class="project">${escapeHtml(entry["Project Name"] || "")}</td>
+            <td class="timecode">${escapeHtml(entry["Timecode Name"] || "")}</td>
+            <td class="comment">${linkifyTags(escapeHtml(entry.Comment || ""))}</td>
+            <td class="tag-cell">${tagsHtml}</td>
+          </tr>
+        `;
+      }
 
-      const sourceCell = source === "historic" ? `<td class="file">${escapeHtml(entry.__sourceFile || "")}</td>` : "";
+      const localTagCell = entry.__localTag
+        ? `<span class="tag-pill">${escapeHtml(entry.__localTag)}</span>`
+        : `<span class="muted">None</span>`;
+      const sourceCell = `<td class="file">${escapeHtml(entry.__sourceFile || "")}</td>`;
 
       return `
         <tr>
@@ -1638,7 +1633,6 @@
           <td class="timecode">${escapeHtml(entry["Timecode Name"] || "")}</td>
           <td class="comment">${linkifyTags(escapeHtml(entry.Comment || ""))}</td>
           <td class="tag-cell">${tagsHtml}</td>
-          ${suggestionCell}
           <td class="local-tag">${localTagCell}</td>
           <td class="project">${escapeHtml(assignment.group || "")}</td>
           <td><span class="status-pill ${statusClass}">${escapeHtml(assignment.assignedBy)}</span></td>
@@ -1720,26 +1714,6 @@
         if (rule.target) options.add(rule.target);
       });
       els.projectOptions.innerHTML = Array.from(options).sort().map(project => `<option value="${escapeAttr(project)}"></option>`).join("");
-    }
-
-    function renderUnmappedTags(pairs) {
-      const ruleMap = getRuleMap();
-      const unmapped = new Map();
-      pairs.forEach(({ assignment }) => {
-        assignment.tags.forEach(tag => {
-          if (!ruleMap.has(tag)) unmapped.set(tag, (unmapped.get(tag) || 0) + 1);
-        });
-      });
-
-      if (!unmapped.size) {
-        els.unmappedTags.innerHTML = `<span class="muted">No unmapped tags found in the current review.</span>`;
-        return;
-      }
-
-      els.unmappedTags.innerHTML = Array.from(unmapped.entries())
-        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-        .map(([tag, count]) => `<button class="secondary small" data-use-tag="${escapeAttr(tag)}" type="button">${escapeHtml(tag)} (${count})</button>`)
-        .join("");
     }
 
     function getOriginalHeaders(entries) {
