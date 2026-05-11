@@ -531,6 +531,7 @@
 
     tbody tr:hover { background: #f8fafc; }
     td.project { min-width: 240px; }
+    td.hours { min-width: 90px; white-space: nowrap; }
     td.timecode { min-width: 170px; }
     td.comment { min-width: 320px; }
     td.tag-cell { min-width: 140px; }
@@ -1634,6 +1635,7 @@
         const reviewHeaders = `
           <th>Date</th>
           <th>Project</th>
+          <th>Hours</th>
           <th>Timecode</th>
           <th>Comment</th>
           <th>Tags</th>
@@ -1641,6 +1643,7 @@
         const historicHeaders = `
           <th>Date</th>
           <th>Project</th>
+          <th>Hours</th>
           <th>Timecode</th>
           <th>Comment</th>
           <th>Tags</th>
@@ -1695,6 +1698,7 @@
       const tagsHtml = assignment.tags.length
         ? assignment.tags.map(tag => `<span class="tag-pill">${escapeHtml(tag)}</span>`).join(" ")
         : `<span class="muted">None</span>`;
+      const workedHours = escapeHtml(entry["Worked Hours"] || entry["Worked Time"] || "");
 
       if (source === "review") {
         const localTag = entry.__localTag || "";
@@ -1703,6 +1707,7 @@
           <tr>
             <td>${escapeHtml(entry.Date || "")}</td>
             <td class="project">${escapeHtml(entry["Project Name"] || "")}</td>
+            <td class="hours">${workedHours}</td>
             <td class="timecode">${escapeHtml(entry["Timecode Name"] || "")}</td>
             <td class="comment">${linkifyTags(escapeHtml(entry.Comment || ""))}</td>
             <td class="tag-cell">
@@ -1725,6 +1730,7 @@
         <tr>
           <td>${escapeHtml(entry.Date || "")}</td>
           <td class="project">${escapeHtml(entry["Project Name"] || "")}</td>
+          <td class="hours">${workedHours}</td>
           <td class="timecode">${escapeHtml(entry["Timecode Name"] || "")}</td>
           <td class="comment">${linkifyTags(escapeHtml(entry.Comment || ""))}</td>
           <td class="tag-cell">${tagsHtml}</td>
