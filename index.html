@@ -476,7 +476,7 @@
       justify-content: flex-end;
     }
 
-    .status-pill.pending { background: #f3f4f6; color: #374151; }
+    .status-pill.ready { background: #f3f4f6; color: #374151; }
     .status-pill.progress { background: #dbeafe; color: #1d4ed8; }
     .status-pill.done { background: #dcfce7; color: #166534; }
 
@@ -673,7 +673,10 @@
                 <h2>Historic filters</h2>
                 <p class="muted">Filter reviewed CSV history by date, project, timecode, tag or text.</p>
               </div>
-              <span class="status-pill historic">Loaded from reviewed CSVs</span>
+              <div class="summary-actions">
+                <span class="status-pill historic">Loaded from reviewed CSVs</span>
+                <button id="saveHistoricTagsBtn" class="secondary" type="button">Save historic tag changes</button>
+              </div>
             </div>
             <div class="filters">
               <label>From
@@ -765,6 +768,7 @@
       historicTimecodeFilter: document.getElementById("historicTimecodeFilter"),
       historicTagFilter: document.getElementById("historicTagFilter"),
       historicSearch: document.getElementById("historicSearch"),
+      saveHistoricTagsBtn: document.getElementById("saveHistoricTagsBtn"),
       historicGroups: document.getElementById("historicGroups"),
       reviewBadge: document.getElementById("reviewBadge"),
       historicBadge: document.getElementById("historicBadge"),
@@ -796,6 +800,7 @@
     els.syncFolderBtn.addEventListener("click", () => syncHistoricCsvFolder({ silent: false }));
     els.forgetFolderBtn.addEventListener("click", forgetHistoricCsvFolder);
     els.clearHistoricCacheBtn.addEventListener("click", clearHistoricCache);
+    els.saveHistoricTagsBtn.addEventListener("click", saveHistoricTagChangesToFolder);
     els.fallbackFolderInput.addEventListener("change", () => syncHistoricCsvFolder({ silent: false }));
 
     els.viewButtons.forEach(button => {
@@ -822,7 +827,32 @@
       render();
     });
 
+    els.historicGroups.addEventListener("change", event => {
+      const input = event.target.closest("input[data-historic-local-tag]");
+      if (!input) return;
+      const entry = state.historicEntries.find(item => item.__id === input.dataset.entryId);
+      if (!entry) return;
+      entry.__localTag = normalizeTagInput(input.value);
+      input.value = entry.__localTag;
+      saveState();
+      render();
+    });
+
     els.pendingGroups.addEventListener("click", event => {
+      const bulkTagButton = event.target.closest("[data-bulk-tag-timecode]");
+      if (bulkTagButton) {
+        const key = bulkTagButton.dataset.bulkTagTimecode;
+        const tag = cleanTag(window.prompt("Add this optional tag to every row in the timecode group:", ""));
+        if (!tag) return;
+        state.pendingEntries.forEach(entry => {
+          if (getReviewGroupKey(entry) !== key) return;
+          if (addTagToEntry(entry, tag)) entry.__reviewed = true;
+        });
+        saveState();
+        render();
+        return;
+      }
+
       const markReviewedButton = event.target.closest("[data-mark-timecode-reviewed]");
       if (markReviewedButton) {
         const key = markReviewedButton.dataset.markTimecodeReviewed;
@@ -1640,8 +1670,8 @@
       const reviewed = pairs.filter(({ entry }) => Boolean(entry.__reviewed || normalizeTagInput(entry.__localTag || ""))).length;
       const remaining = Math.max(0, total - reviewed);
       const done = remaining === 0;
-      const statusClass = done ? "done" : (reviewed > 0 || tagged > 0 ? "progress" : "pending");
-      const statusLabel = done ? "Reviewed" : (reviewed > 0 || tagged > 0 ? "In progress" : "Pending");
+      const statusClass = done ? "done" : (reviewed > 0 || tagged > 0 ? "progress" : "ready");
+      const statusLabel = done ? "Reviewed" : (reviewed > 0 || tagged > 0 ? "In progress" : "Ready to review");
       return { total, tagged, reviewed, remaining, done, statusClass, statusLabel };
     }
 
@@ -1675,19 +1705,18 @@
           <th>Timecode</th>
           <th>Comment</th>
           <th>Tags</th>
-          <th>Reviewed tag</th>
-          <th>Assigned group</th>
-          <th>Assigned by</th>
-          <th>Source CSV</th>
         `;
         const subgroups = group.timecodes.map(timecodeGroup => {
           const reviewState = timecodeGroup.reviewState;
           const reviewKey = getReviewGroupKey(timecodeGroup.entries[0].entry, timecodeGroup.entries[0].assignment);
-          const taggedText = reviewState.tagged ? ` · ${reviewState.tagged} tagged exception${reviewState.tagged === 1 ? "" : "s"}` : "";
-          const actionButton = options.source === "review"
-            ? (reviewState.done
-                ? `<button class="secondary small" data-reset-timecode-reviewed="${escapeAttr(reviewKey)}" type="button">Reset</button>`
-                : `<button class="small" data-mark-timecode-reviewed="${escapeAttr(reviewKey)}" type="button">Mark remaining reviewed</button>`)
+          const taggedText = reviewState.tagged ? ` · ${reviewState.tagged} tagged row${reviewState.tagged === 1 ? "" : "s"}` : "";
+          const actionButtons = options.source === "review"
+            ? `
+                <button class="secondary small" data-bulk-tag-timecode="${escapeAttr(reviewKey)}" type="button">Add tag to all</button>
+                ${reviewState.done
+                  ? `<button class="secondary small" data-reset-timecode-reviewed="${escapeAttr(reviewKey)}" type="button">Reset</button>`
+                  : `<button class="small" data-mark-timecode-reviewed="${escapeAttr(reviewKey)}" type="button">Mark remaining reviewed</button>`}
+              `
             : "";
           const rows = timecodeGroup.entries
             .sort((a, b) => compareEntryDate(a.entry, b.entry) || String(a.entry.Comment || "").localeCompare(String(b.entry.Comment || "")))
@@ -1702,7 +1731,7 @@
                 </span>
                 <span class="summary-actions">
                   <span class="status-pill ${reviewState.statusClass}">${escapeHtml(reviewState.statusLabel)}</span>
-                  ${actionButton}
+                  ${actionButtons}
                   <span class="group-toggle" aria-hidden="true"></span>
                 </span>
               </summary>
@@ -1761,11 +1790,7 @@
         `;
       }
 
-      const localTagCell = entry.__localTag
-        ? `<span class="tag-pill">${escapeHtml(entry.__localTag)}</span>`
-        : `<span class="muted">None</span>`;
-      const sourceCell = `<td class="file">${escapeHtml(entry.__sourceFile || "")}</td>`;
-
+      const localTag = entry.__localTag || "";
       return `
         <tr>
           <td>${escapeHtml(entry.Date || "")}</td>
@@ -1773,11 +1798,12 @@
           <td class="hours">${workedHours}</td>
           <td class="timecode">${escapeHtml(entry["Timecode Name"] || "")}</td>
           <td class="comment">${linkifyTags(escapeHtml(entry.Comment || ""))}</td>
-          <td class="tag-cell">${tagsHtml}</td>
-          <td class="local-tag">${localTagCell}</td>
-          <td class="project">${escapeHtml(assignment.group || "")}</td>
-          <td><span class="status-pill ${statusClass}">${escapeHtml(assignment.assignedBy)}</span></td>
-          ${sourceCell}
+          <td class="tag-cell">
+            <div class="tag-editor">
+              <div>${tagsHtml}</div>
+              <input data-historic-local-tag="true" data-entry-id="${escapeAttr(entry.__id)}" list="tagOptions" type="text" value="${escapeAttr(localTag)}" placeholder="Add optional tag" />
+            </div>
+          </td>
         </tr>
       `;
     }
@@ -1870,13 +1896,13 @@
       return headers;
     }
 
-    function buildReviewedCsv(entries) {
+    function buildReviewedCsvContent(entries, source = "review") {
       const originalHeaders = getOriginalHeaders(entries);
       const extraHeaders = ["Local Tag", "Detected Tags", "Assigned Group", "Assigned By", "Assignment Source"];
       const headers = [...originalHeaders, ...extraHeaders];
 
       const rows = entries.map(entry => {
-        const assignment = getAssignment(entry, "review");
+        const assignment = getAssignment(entry, source);
         const output = { ...entry };
         output["Local Tag"] = entry.__localTag || "";
         output["Detected Tags"] = assignment.tags.join(" ");
@@ -1886,7 +1912,11 @@
         return headers.map(header => output[header] || "");
       });
 
-      const csv = [headers, ...rows].map(row => row.map(escapeCsv).join(",")).join("\r\n");
+      return [headers, ...rows].map(row => row.map(escapeCsv).join(",")).join("\r\n");
+    }
+
+    function buildReviewedCsv(entries) {
+      const csv = buildReviewedCsvContent(entries, "review");
       const sourceStem = safeFileStem(state.pendingFileName || "time-recording");
       const stamp = new Date().toISOString().replace(/[-:]/g, "").slice(0, 15);
       const fileName = `${sourceStem}-reviewed-${stamp}.csv`;
@@ -1948,6 +1978,53 @@
       render();
     }
 
+    async function saveHistoricTagChangesToFolder() {
+      if (!state.historicEntries.length) {
+        alert("There are no historic rows loaded.");
+        return;
+      }
+
+      if (!folderApiSupported()) {
+        alert("Historic tag edits can be made here, but saving them back to the folder needs Chrome or Edge folder access.");
+        return;
+      }
+
+      const handle = await getConnectedDirectoryHandle();
+      if (!handle) {
+        alert("Choose your historic CSV folder first.");
+        return;
+      }
+
+      const permitted = await ensureDirectoryPermission(handle, "readwrite");
+      if (!permitted) {
+        alert("The browser did not grant write access to the historic CSV folder.");
+        return;
+      }
+
+      const files = new Map();
+      state.historicEntries.forEach(entry => {
+        const sourceFile = normalize(entry.__sourceFile);
+        if (!sourceFile) return;
+        if (!files.has(sourceFile)) files.set(sourceFile, []);
+        files.get(sourceFile).push(entry);
+      });
+
+      let savedFiles = 0;
+      for (const [sourceFile, entries] of files.entries()) {
+        const csv = buildReviewedCsvContent(entries, "historic");
+        const fileHandle = await handle.getFileHandle(sourceFile, { create: true });
+        const writable = await fileHandle.createWritable();
+        await writable.write(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+        await writable.close();
+        savedFiles += 1;
+      }
+
+      await saveRulesToDirectory(handle);
+      await syncHistoricCsvFolder({ silent: true });
+      alert(`Saved historic tag changes to ${savedFiles} reviewed CSV file${savedFiles === 1 ? "" : "s"} in ${handle.name}.`);
+      render();
+    }
+
     function downloadCsv(csv, fileName) {
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
       const url = URL.createObjectURL(blob);
@@ -1986,7 +2063,7 @@
       [els.connectFolderBtn, els.syncFolderBtn, els.forgetFolderBtn].forEach(button => {
         if (button) button.disabled = !(supported || fallbackSupported);
       });
-      [els.exportReviewToFolderBtn, els.saveRulesToFolderBtn].forEach(button => {
+      [els.exportReviewToFolderBtn, els.saveRulesToFolderBtn, els.saveHistoricTagsBtn].forEach(button => {
         if (button) button.disabled = !supported;
       });
 
@@ -2026,6 +2103,7 @@
       els.forgetFolderBtn.disabled = !hasFolder;
       els.exportReviewToFolderBtn.disabled = !hasFolder;
       els.saveRulesToFolderBtn.disabled = !hasFolder;
+      els.saveHistoricTagsBtn.disabled = !hasFolder;
 
       if (!hasFolder) {
         els.folderStatus.textContent = "No historic CSV folder connected. Choose the folder where reviewed CSV exports and rules are stored.";
