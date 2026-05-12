@@ -1436,7 +1436,11 @@
       const key = searchInput.dataset.filterKey;
       if (!uiState.filterSearch[scope] || !(key in uiState.filterSearch[scope])) return;
       uiState.filterSearch[scope][key] = searchInput.value;
+      if (uiState.filterOpen[scope] && key in uiState.filterOpen[scope]) {
+        uiState.filterOpen[scope][key] = true;
+      }
       render();
+      reopenMultiFilter(scope, key, { focusSearch: true });
     });
 
     document.addEventListener("change", event => {
@@ -1446,6 +1450,9 @@
       const key = optionInput.dataset.filterKey;
       const value = optionInput.dataset.filterValue;
       if (!uiState.filterSelections[scope] || !Array.isArray(uiState.filterSelections[scope][key])) return;
+      if (uiState.filterOpen[scope] && key in uiState.filterOpen[scope]) {
+        uiState.filterOpen[scope][key] = true;
+      }
       const current = new Set(uiState.filterSelections[scope][key]);
       if (optionInput.checked) current.add(value);
       else current.delete(value);
@@ -1457,6 +1464,7 @@
         uiState.filterSearch[scope].tag = "";
       }
       render();
+      reopenMultiFilter(scope, key, { focusSearch: false });
     });
 
     document.addEventListener("toggle", event => {
@@ -2345,6 +2353,10 @@
       const trendDateRange = getDateRange(trendFiltersActive ? filteredTrends : historicPairs);
       const trendPairsForView = trendFiltersActive ? filteredTrends : historicPairs;
       const trendPairsForCharts = filterTrendHolidayPairs(trendPairsForView);
+      const trendPairsForMonthBaseline = filterTrendHolidayPairs(filterPairs(historicPairs, {
+        from: els.trendFrom.value,
+        to: els.trendTo.value
+      }));
       const trendChartDateRange = getDateRange(trendPairsForCharts);
 
       els.reviewBadge.textContent = String(state.pendingEntries.length);
@@ -2386,7 +2398,7 @@
       });
 
       renderTrendChart(trendPairsForCharts);
-      renderTrendOverTimeChart(trendPairsForCharts);
+      renderTrendOverTimeChart(trendPairsForCharts, trendPairsForMonthBaseline);
       renderBillableView(trendPairsForCharts);
       renderTrendSubview();
 
@@ -2706,8 +2718,14 @@
       });
     }
 
-    function buildMonthlyTrendData(pairs, metric) {
-      const totalHours = Math.max(pairs.reduce((sum, { entry }) => sum + getEntryHours(entry), 0), 0);
+    function buildMonthlyTrendData(pairs, metric, baselinePairs = pairs) {
+      const monthTotals = new Map();
+      baselinePairs.forEach(({ entry }) => {
+        const key = getMonthKey(entry.Date);
+        if (!key) return;
+        monthTotals.set(key, (monthTotals.get(key) || 0) + getEntryHours(entry));
+      });
+
       const groups = new Map();
       pairs.forEach(({ entry }) => {
         const key = getMonthKey(entry.Date);
@@ -2720,7 +2738,10 @@
         .sort((a, b) => a.monthKey.localeCompare(b.monthKey))
         .map(item => ({
           ...item,
-          value: metric === "percent" ? (totalHours ? (item.hours / totalHours) * 100 : 0) : item.hours
+          baselineHours: monthTotals.get(item.monthKey) || 0,
+          value: metric === "percent"
+            ? ((monthTotals.get(item.monthKey) || 0) ? (item.hours / (monthTotals.get(item.monthKey) || 0)) * 100 : 0)
+            : item.hours
         }));
     }
 
@@ -2761,7 +2782,7 @@
       }).join("") || `<div class="card empty">No ${escapeHtml(metricLabel)} to chart.</div>`;
     }
 
-    function renderTrendOverTimeChart(pairs) {
+    function renderTrendOverTimeChart(pairs, baselinePairs = pairs) {
       if (!els.trendOverTimeChart || !els.trendOverTimeRangeLabel) return;
 
       if (!pairs.length) {
@@ -2770,14 +2791,14 @@
       }
 
       const metric = els.trendTimeMetric.value || "hours";
-      const data = buildMonthlyTrendData(pairs, metric);
+      const data = buildMonthlyTrendData(pairs, metric, baselinePairs);
       if (!data.length) {
         els.trendOverTimeChart.innerHTML = `<div class="card empty">No dated historic rows are available for the over-time chart.</div>`;
         return;
       }
 
       const maxValue = Math.max(...data.map(item => item.value), 1);
-      const metricLabel = metric === "percent" ? "percentage of filtered total" : "hours";
+      const metricLabel = metric === "percent" ? "percentage of each month's total time" : "hours";
       els.trendOverTimeChart.innerHTML = `
         <div class="month-chart-grid" role="img" aria-label="Historic trend over time by month in ${escapeAttr(metricLabel)}">
           ${data.map(item => {
@@ -2785,11 +2806,14 @@
             const displayValue = metric === "percent"
               ? `${(Math.round(item.value * 10) / 10).toFixed(1)}%`
               : formatHours(item.value);
+            const titleValue = metric === "percent"
+              ? `${item.label}: ${displayValue} of ${formatHours(item.baselineHours)} total hours`
+              : `${item.label}: ${displayValue} hours`;
             return `
               <div class="month-bar">
                 <div class="month-bar-value">${escapeHtml(metric === "percent" ? displayValue : `${displayValue}h`)}</div>
                 <div class="month-bar-track">
-                  <div class="month-bar-fill" style="height: ${escapeAttr(height)}" title="${escapeAttr(`${item.label}: ${metric === "percent" ? displayValue : `${displayValue} hours`}`)}"></div>
+                  <div class="month-bar-fill" style="height: ${escapeAttr(height)}" title="${escapeAttr(titleValue)}"></div>
                 </div>
                 <div class="month-bar-label">${escapeHtml(item.label)}</div>
               </div>
@@ -3645,6 +3669,17 @@
 
     function getScopedOpen(scope) {
       return uiState.filterOpen[scope] || { project: false, timecode: false, tag: false };
+    }
+
+    function reopenMultiFilter(scope, key, options = {}) {
+      window.requestAnimationFrame(() => {
+        const details = document.querySelector(`details[data-filter-details="true"][data-filter-scope="${CSS.escape(scope)}"][data-filter-key="${CSS.escape(key)}"]`);
+        if (!details) return;
+        details.open = true;
+        if (!options.focusSearch) return;
+        const search = details.querySelector("[data-filter-search]");
+        if (search) search.focus();
+      });
     }
 
     function getPairsForProjects(pairs, projects) {
