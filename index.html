@@ -705,6 +705,9 @@
       gap: 8px;
       font-weight: 500;
       color: var(--text);
+      padding: 4px 2px;
+      cursor: pointer;
+      user-select: none;
     }
 
     .multi-filter-option input {
@@ -1451,13 +1454,11 @@
       const scope = searchInput.dataset.filterScope;
       const key = searchInput.dataset.filterKey;
       if (!uiState.filterSearch[scope] || !(key in uiState.filterSearch[scope])) return;
-      const cursorPos = searchInput.selectionStart ?? searchInput.value.length;
       uiState.filterSearch[scope][key] = searchInput.value;
       if (uiState.filterOpen[scope] && key in uiState.filterOpen[scope]) {
         uiState.filterOpen[scope][key] = true;
       }
-      render();
-      reopenMultiFilter(scope, key, { focusSearch: true, cursorPos });
+      applyMultiFilterSearch(searchInput);
     });
 
     document.addEventListener("change", event => {
@@ -1494,14 +1495,20 @@
     });
 
     document.addEventListener("click", event => {
-      const filterOption = event.target.closest(".multi-filter-option");
+      const optionInput = event.target.closest("input[data-filter-option]");
+      if (optionInput) {
+        event.stopPropagation();
+        return;
+      }
+
+      const filterOption = event.target.closest("[data-filter-option-row]");
       if (!filterOption) return;
-      const optionInput = filterOption.querySelector("[data-filter-option]");
-      if (!optionInput) return;
+      const rowInput = filterOption.querySelector("[data-filter-option]");
+      if (!rowInput) return;
       event.preventDefault();
       event.stopPropagation();
-      optionInput.checked = !optionInput.checked;
-      optionInput.dispatchEvent(new Event("change", { bubbles: true }));
+      rowInput.checked = !rowInput.checked;
+      rowInput.dispatchEvent(new Event("change", { bubbles: true }));
     }, true);
     
     document.addEventListener("click", event => {
@@ -3733,6 +3740,36 @@
       });
     }
 
+    function applyMultiFilterSearch(searchInput) {
+      const details = searchInput.closest("details[data-filter-details]");
+      const optionsWrap = details && details.querySelector(".multi-filter-options");
+      if (!details || !optionsWrap) return;
+
+      const query = searchInput.value.trim().toLowerCase();
+      const optionLabels = Array.from(optionsWrap.querySelectorAll(".multi-filter-option"));
+      let visibleCount = 0;
+
+      optionLabels.forEach(label => {
+        const optionInput = label.querySelector("[data-filter-option]");
+        const optionValue = optionInput ? String(optionInput.dataset.filterValue || "") : label.textContent || "";
+        const matches = !query || optionValue.toLowerCase().includes(query);
+        label.classList.toggle("hidden", !matches);
+        if (matches) visibleCount += 1;
+      });
+
+      let emptyState = optionsWrap.querySelector(".multi-filter-empty.dynamic");
+      if (!visibleCount) {
+        if (!emptyState) {
+          emptyState = document.createElement("div");
+          emptyState.className = "multi-filter-empty dynamic";
+          optionsWrap.appendChild(emptyState);
+        }
+        emptyState.textContent = "No matching options.";
+      } else if (emptyState) {
+        emptyState.remove();
+      }
+    }
+
     function clearTrendFilters({ includeBillable = false } = {}) {
       els.trendFrom.value = "";
       els.trendTo.value = "";
@@ -3814,7 +3851,7 @@
             <div class="multi-filter-options">
               ${visibleOptions.length
                 ? visibleOptions.map(option => `
-                    <label class="multi-filter-option">
+                    <div class="multi-filter-option" data-filter-option-row="true">
                       <input
                         data-filter-option="true"
                         data-filter-scope="${escapeAttr(scope)}"
@@ -3824,7 +3861,7 @@
                         ${selectedValues.includes(option) ? "checked" : ""}
                       />
                       <span>${escapeHtml(option)}</span>
-                    </label>
+                    </div>
                   `).join("")
                 : `<div class="multi-filter-empty">${escapeHtml(emptyMessage || "No matching options.")}</div>`}
             </div>
