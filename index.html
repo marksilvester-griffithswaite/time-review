@@ -87,6 +87,13 @@
       letter-spacing: 0.08em;
       text-transform: uppercase;
       margin-bottom: 14px;
+      text-decoration: none;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .app-kicker:hover {
+      background: rgba(67, 75, 234, 0.14);
+      color: var(--accent-dark);
     }
 
     .app-title {
@@ -950,7 +957,7 @@
   <main>
     <section class="app-hero" aria-label="Application brand">
       <div>
-        <span class="app-kicker">Griffiths Waite</span>
+        <a class="app-kicker" href="./">Griffiths Waite</a>
         <h1 class="app-title">Time Review Hub</h1>
         <p class="app-lead">Review current submissions, keep historic records tidy, and explore time trends in one place with a cleaner Griffiths Waite-inspired interface.</p>
       </div>
