@@ -1495,9 +1495,14 @@
     document.addEventListener("click", event => {
       const filterOption = event.target.closest(".multi-filter-option");
       if (!filterOption) return;
+      const optionInput = filterOption.querySelector("[data-filter-option]");
+      if (!optionInput) return;
+      event.preventDefault();
       event.stopPropagation();
+      optionInput.checked = !optionInput.checked;
+      optionInput.dispatchEvent(new Event("change", { bubbles: true }));
     }, true);
-
+    
     document.addEventListener("click", event => {
       const subviewButton = event.target.closest("[data-trend-subview]");
       if (!subviewButton) return;
