@@ -2596,7 +2596,9 @@
                   <span class="group-meta">${timecodeGroup.entries.length} row${timecodeGroup.entries.length === 1 ? "" : "s"} · ${formatHours(timecodeGroup.totalHours)} hours${taggedText}</span>
                 </span>
                 <span class="summary-actions">
-                  <span class="status-pill ${reviewState.statusClass}">${escapeHtml(reviewState.statusLabel)}</span>
+                  ${options.source === "review"
+                    ? `<span class="status-pill ${reviewState.statusClass}">${escapeHtml(reviewState.statusLabel)}</span>`
+                    : ""}
                   ${actionButtons}
                   <span class="group-toggle" aria-hidden="true"></span>
                 </span>
