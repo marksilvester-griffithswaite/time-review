@@ -173,6 +173,11 @@
       background: var(--historic-bg);
     }
 
+    .step-button.active[data-view-target="trends"] {
+      border-color: var(--accent);
+      background: #eff6ff;
+    }
+
     .badge {
       display: inline-flex;
       align-items: center;
@@ -258,6 +263,74 @@
       gap: 10px;
       flex-wrap: wrap;
       align-items: center;
+    }
+
+    .chart-card {
+      display: grid;
+      gap: 16px;
+    }
+
+    .chart-controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: end;
+    }
+
+    .chart-controls label { min-width: 180px; }
+
+    .chart-summary {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      color: var(--muted);
+    }
+
+    .chart-bars {
+      display: grid;
+      gap: 12px;
+    }
+
+    .chart-row {
+      display: grid;
+      grid-template-columns: minmax(220px, 320px) minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .chart-label {
+      font-weight: 700;
+      color: var(--text);
+      word-break: break-word;
+    }
+
+    .chart-track {
+      position: relative;
+      height: 18px;
+      border-radius: 999px;
+      background: #e5eef9;
+      overflow: hidden;
+    }
+
+    .chart-fill {
+      position: absolute;
+      inset: 0 auto 0 0;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #2563eb, #38bdf8);
+    }
+
+    .chart-value {
+      font-weight: 750;
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    @media (max-width: 760px) {
+      .chart-row {
+        grid-template-columns: 1fr;
+        gap: 6px;
+      }
     }
 
     .optional-panel summary {
@@ -556,6 +629,9 @@
       <button class="step-button" data-view-target="historic" type="button">
         <strong>Historic review <span id="historicBadge" class="badge historic">0</span></strong>
       </button>
+      <button class="step-button" data-view-target="trends" type="button">
+        <strong>Trends <span id="trendsBadge" class="badge">0</span></strong>
+      </button>
     </section>
 
     <section id="reviewView" class="view-panel active" aria-labelledby="reviewTitle">
@@ -722,6 +798,40 @@
         </section>
       </div>
     </section>
+
+    <section id="trendsView" class="view-panel" aria-labelledby="trendsTitle">
+      <section class="card chart-card">
+        <div class="row between">
+          <div>
+            <h2 id="trendsTitle">Historic trends</h2>
+            <p class="muted">Visualise the historic review data as a bar chart. The same historic filters apply here too.</p>
+          </div>
+          <span class="status-pill historic">Based on historic review data</span>
+        </div>
+
+        <div class="chart-controls">
+          <label>Group by
+            <select id="trendGroupBy">
+              <option value="project">Project</option>
+              <option value="timecode">Timecode</option>
+              <option value="month">Month</option>
+            </select>
+          </label>
+          <label>Metric
+            <select id="trendMetric">
+              <option value="hours">Hours</option>
+              <option value="rows">Rows</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="chart-summary">
+          <span id="trendRangeLabel">No historic data loaded.</span>
+        </div>
+
+        <div id="trendChart" class="chart-bars"></div>
+      </section>
+    </section>
   </main>
 
   <script>
@@ -781,6 +891,7 @@
       historicGroups: document.getElementById("historicGroups"),
       reviewBadge: document.getElementById("reviewBadge"),
       historicBadge: document.getElementById("historicBadge"),
+      trendsBadge: document.getElementById("trendsBadge"),
       pendingCount: document.getElementById("pendingCount"),
       skippedHistoricCount: document.getElementById("skippedHistoricCount"),
       skippedFileCount: document.getElementById("skippedFileCount"),
@@ -789,10 +900,15 @@
       historicFilteredCount: document.getElementById("historicFilteredCount"),
       historicEarliestDate: document.getElementById("historicEarliestDate"),
       historicLatestDate: document.getElementById("historicLatestDate"),
+      trendGroupBy: document.getElementById("trendGroupBy"),
+      trendMetric: document.getElementById("trendMetric"),
+      trendRangeLabel: document.getElementById("trendRangeLabel"),
+      trendChart: document.getElementById("trendChart"),
       viewButtons: Array.from(document.querySelectorAll("[data-view-target]")),
       viewPanels: {
         review: document.getElementById("reviewView"),
-        historic: document.getElementById("historicView")
+        historic: document.getElementById("historicView"),
+        trends: document.getElementById("trendsView")
       }
     };
 
@@ -818,7 +934,8 @@
 
     [
       els.pendingSearch, els.pendingProjectFilter, els.pendingTimecodeFilter, els.pendingTagFilter,
-      els.historicFrom, els.historicTo, els.historicProjectFilter, els.historicTimecodeFilter, els.historicTagFilter, els.historicSearch
+      els.historicFrom, els.historicTo, els.historicProjectFilter, els.historicTimecodeFilter, els.historicTagFilter, els.historicSearch,
+      els.trendGroupBy, els.trendMetric
     ].forEach(el => {
       el.addEventListener("input", render);
       el.addEventListener("change", render);
@@ -959,7 +1076,7 @@
         loaded.suggestionRules = Array.isArray(loaded.suggestionRules) ? loaded.suggestionRules.map(ensureSuggestionRule).filter(Boolean) : [];
         loaded.pendingEntries = loaded.pendingEntries.map(ensureEntryId);
         loaded.historicEntries = loaded.historicEntries.map(ensureEntryId);
-        loaded.activeView = loaded.activeView === "historic" ? "historic" : "review";
+        loaded.activeView = ["review", "historic", "trends"].includes(loaded.activeView) ? loaded.activeView : "review";
         return loaded;
       } catch (error) {
         console.warn("Unable to load saved state", error);
@@ -1071,7 +1188,7 @@
     }
 
     function switchView(view) {
-      state.activeView = view === "historic" ? "historic" : "review";
+      state.activeView = ["review", "historic", "trends"].includes(view) ? view : "review";
       saveState();
       renderViewState();
     }
@@ -1545,6 +1662,7 @@
 
       els.reviewBadge.textContent = String(state.pendingEntries.length);
       els.historicBadge.textContent = String(state.historicEntries.length);
+      els.trendsBadge.textContent = String(state.historicEntries.length);
       els.pendingCount.textContent = String(state.pendingEntries.length);
       els.suggestionCount.textContent = String(visibleSuggestionCount);
       els.historicCount.textContent = String(state.historicEntries.length);
@@ -1575,6 +1693,8 @@
         emptyNoData: "No historic CSV rows are loaded. Choose or sync the folder where you store exported reviewed CSVs.",
         emptyFiltered: "No historic rows match these filters."
       });
+
+      renderTrendChart(historicFiltersActive ? filteredHistoric : historicPairs);
 
       updateFolderStatus();
       renderViewState();
@@ -1836,6 +1956,61 @@
           <button class="small dismiss" data-entry-id="${escapeAttr(entry.__id)}" data-dismiss-suggested-tag="${escapeAttr(tag)}" type="button">Do not suggest</button>
         </span>
       `).join("")}</div>`;
+    }
+
+    function buildTrendData(pairs, groupBy, metric) {
+      const groups = new Map();
+      pairs.forEach(({ entry }) => {
+        const key = groupBy === "timecode"
+          ? (normalize(entry["Timecode Name"]) || "No timecode")
+          : groupBy === "month"
+            ? getMonthLabel(entry.Date)
+            : (normalize(entry["Project Name"]) || "No project");
+        if (!groups.has(key)) groups.set(key, { label: key, hours: 0, rows: 0 });
+        const item = groups.get(key);
+        item.rows += 1;
+        item.hours += getEntryHours(entry);
+      });
+
+      return Array.from(groups.values())
+        .map(item => ({
+          ...item,
+          value: metric === "rows" ? item.rows : item.hours
+        }))
+        .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label))
+        .slice(0, 20);
+    }
+
+    function renderTrendChart(pairs) {
+      if (!els.trendChart || !els.trendRangeLabel) return;
+
+      const dateRange = getDateRange(pairs);
+      if (!pairs.length) {
+        els.trendRangeLabel.textContent = "No historic rows match the current filters.";
+        els.trendChart.innerHTML = `<div class="card empty">No historic data available for the chart.</div>`;
+        return;
+      }
+
+      const groupBy = els.trendGroupBy.value || "project";
+      const metric = els.trendMetric.value || "hours";
+      const data = buildTrendData(pairs, groupBy, metric);
+      const maxValue = Math.max(...data.map(item => item.value), 1);
+      const metricLabel = metric === "rows" ? "rows" : "hours";
+      els.trendRangeLabel.textContent = `${pairs.length} row${pairs.length === 1 ? "" : "s"} from ${dateRange.earliest} to ${dateRange.latest}.`;
+
+      els.trendChart.innerHTML = data.map(item => {
+        const width = `${(item.value / maxValue) * 100}%`;
+        const displayValue = metric === "rows" ? String(item.value) : `${formatHours(item.value)} hours`;
+        return `
+          <div class="chart-row">
+            <div class="chart-label">${escapeHtml(item.label)}</div>
+            <div class="chart-track" aria-label="${escapeAttr(item.label)} ${escapeAttr(displayValue)}">
+              <div class="chart-fill" style="width: ${escapeAttr(width)}"></div>
+            </div>
+            <div class="chart-value">${escapeHtml(displayValue)}</div>
+          </div>
+        `;
+      }).join("") || `<div class="card empty">No ${escapeHtml(metricLabel)} to chart.</div>`;
     }
 
     function renderRules() {
@@ -2589,6 +2764,12 @@
         earliest: formatDisplayDate(dates[0]),
         latest: formatDisplayDate(dates[dates.length - 1])
       };
+    }
+
+    function getMonthLabel(value) {
+      const iso = toDateInputValue(value);
+      if (!iso) return "No date";
+      return iso.slice(0, 7);
     }
 
     function escapeHtml(value) {
