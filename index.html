@@ -713,8 +713,8 @@
             <div class="summary-grid">
               <div class="mini-stat"><strong id="historicCount">0</strong><span>historic rows loaded</span></div>
               <div class="mini-stat"><strong id="historicFilteredCount">0</strong><span>rows currently shown</span></div>
-              <div class="mini-stat"><strong id="historicCsvCount">0</strong><span>reviewed CSVs loaded</span></div>
-              <div class="mini-stat"><strong id="historicTagCount">0</strong><span>tags in history</span></div>
+              <div class="mini-stat"><strong id="historicEarliestDate">None</strong><span>earliest date in current view</span></div>
+              <div class="mini-stat"><strong id="historicLatestDate">None</strong><span>latest date in current view</span></div>
             </div>
           </section>
 
@@ -787,8 +787,8 @@
       suggestionCount: document.getElementById("suggestionCount"),
       historicCount: document.getElementById("historicCount"),
       historicFilteredCount: document.getElementById("historicFilteredCount"),
-      historicCsvCount: document.getElementById("historicCsvCount"),
-      historicTagCount: document.getElementById("historicTagCount"),
+      historicEarliestDate: document.getElementById("historicEarliestDate"),
+      historicLatestDate: document.getElementById("historicLatestDate"),
       viewButtons: Array.from(document.querySelectorAll("[data-view-target]")),
       viewPanels: {
         review: document.getElementById("reviewView"),
@@ -1522,6 +1522,14 @@
         timecode: els.historicTimecodeFilter.value,
         tag: els.historicTagFilter.value
       });
+      const historicFiltersActive = Boolean(
+        els.historicSearch.value ||
+        els.historicFrom.value ||
+        els.historicTo.value ||
+        els.historicProjectFilter.value ||
+        els.historicTimecodeFilter.value ||
+        els.historicTagFilter.value
+      );
 
       populateSelect(els.pendingProjectFilter, "All projects and groups", getProjectAndGroupOptions(pendingPairs), els.pendingProjectFilter.value);
       populateSelect(els.pendingTimecodeFilter, "All timecodes", getTimecodeOptions(pendingPairs), els.pendingTimecodeFilter.value);
@@ -1533,8 +1541,7 @@
       const pendingGroups = groupPairs(filteredPending);
       const historicGroups = groupPairs(filteredHistoric);
       const visibleSuggestionCount = getPendingSuggestionCount(filteredPending);
-      const historyTags = getTagOptions(historicPairs);
-      const sourceFiles = unique(state.historicEntries.map(entry => entry.__sourceFile).filter(Boolean));
+      const historicDateRange = getDateRange(historicFiltersActive ? filteredHistoric : historicPairs);
 
       els.reviewBadge.textContent = String(state.pendingEntries.length);
       els.historicBadge.textContent = String(state.historicEntries.length);
@@ -1542,8 +1549,8 @@
       els.suggestionCount.textContent = String(visibleSuggestionCount);
       els.historicCount.textContent = String(state.historicEntries.length);
       els.historicFilteredCount.textContent = String(filteredHistoric.length);
-      els.historicCsvCount.textContent = String(sourceFiles.length || (state.historicEntries.length ? 1 : 0));
-      els.historicTagCount.textContent = String(historyTags.length);
+      els.historicEarliestDate.textContent = historicDateRange.earliest;
+      els.historicLatestDate.textContent = historicDateRange.latest;
 
       const summary = state.lastImportSummary || {};
       els.skippedHistoricCount.textContent = String(summary.skippedHistoric || 0);
@@ -2563,6 +2570,25 @@
 
     function compareEntryDate(a, b) {
       return toDateInputValue(a.Date).localeCompare(toDateInputValue(b.Date));
+    }
+
+    function formatDisplayDate(value) {
+      const iso = toDateInputValue(value);
+      if (!iso) return "None";
+      const [year, month, day] = iso.split("-");
+      return `${day}/${month}/${year}`;
+    }
+
+    function getDateRange(pairs) {
+      const dates = pairs
+        .map(({ entry }) => toDateInputValue(entry.Date))
+        .filter(Boolean)
+        .sort();
+      if (!dates.length) return { earliest: "None", latest: "None" };
+      return {
+        earliest: formatDisplayDate(dates[0]),
+        latest: formatDisplayDate(dates[dates.length - 1])
+      };
     }
 
     function escapeHtml(value) {
