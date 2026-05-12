@@ -1212,6 +1212,7 @@
                 <option value="alphabetical">A to Z</option>
               </select>
             </label>
+            <button id="clearTrendAllFiltersBtn" class="secondary" type="button">Clear filters</button>
           </div>
 
           <div class="chart-summary">
@@ -1229,6 +1230,7 @@
                 <option value="percent">% of filtered total</option>
               </select>
             </label>
+            <button id="clearTrendOverTimeFiltersBtn" class="secondary" type="button">Clear filters</button>
           </div>
 
           <div class="chart-summary">
@@ -1245,6 +1247,7 @@
                 <h3>Billable settings</h3>
                 <p class="muted">Choose which projects count as non-billable inside the already-filtered trends dataset.</p>
               </div>
+              <button id="clearTrendBillableFiltersBtn" class="secondary" type="button">Clear filters</button>
             </div>
             <div class="filters">
               <div class="filter-field">
@@ -1388,6 +1391,9 @@
       trendAllPanel: document.getElementById("trendAllPanel"),
       trendOverTimePanel: document.getElementById("trendOverTimePanel"),
       trendBillablePanel: document.getElementById("trendBillablePanel"),
+      clearTrendAllFiltersBtn: document.getElementById("clearTrendAllFiltersBtn"),
+      clearTrendOverTimeFiltersBtn: document.getElementById("clearTrendOverTimeFiltersBtn"),
+      clearTrendBillableFiltersBtn: document.getElementById("clearTrendBillableFiltersBtn"),
       trendOverTimeRangeLabel: document.getElementById("trendOverTimeRangeLabel"),
       trendOverTimeChart: document.getElementById("trendOverTimeChart"),
       trendExcludeHolidays: document.getElementById("trendExcludeHolidays"),
@@ -1424,6 +1430,9 @@
     els.clearHistoricCacheBtn.addEventListener("click", clearHistoricCache);
     els.saveHistoricTagsBtn.addEventListener("click", saveHistoricTagChangesToFolder);
     els.fallbackFolderInput.addEventListener("change", () => syncHistoricCsvFolder({ silent: false }));
+    els.clearTrendAllFiltersBtn.addEventListener("click", () => clearTrendFilters({ includeBillable: false }));
+    els.clearTrendOverTimeFiltersBtn.addEventListener("click", () => clearTrendFilters({ includeBillable: false }));
+    els.clearTrendBillableFiltersBtn.addEventListener("click", () => clearTrendFilters({ includeBillable: true }));
 
     els.viewButtons.forEach(button => {
       button.addEventListener("click", () => switchView(button.dataset.viewTarget));
@@ -1475,6 +1484,12 @@
       if (!uiState.filterOpen[scope] || !(key in uiState.filterOpen[scope])) return;
       uiState.filterOpen[scope][key] = details.open;
     });
+
+    document.addEventListener("click", event => {
+      const filterOption = event.target.closest(".multi-filter-option");
+      if (!filterOption) return;
+      event.stopPropagation();
+    }, true);
 
     document.addEventListener("click", event => {
       const subviewButton = event.target.closest("[data-trend-subview]");
@@ -2766,7 +2781,9 @@
       const metricLabel = metric === "percent" ? "percentage of filtered total time" : "hours";
 
       els.trendChart.innerHTML = data.map(item => {
-        const width = `${(item.value / maxValue) * 100}%`;
+        const width = metric === "percent"
+          ? `${Math.max(0, Math.min(100, item.value))}%`
+          : `${(item.value / maxValue) * 100}%`;
         const displayValue = metric === "percent"
           ? `${(Math.round(item.value * 10) / 10).toFixed(1)}%`
           : `${formatHours(item.value)} hours`;
@@ -2802,7 +2819,9 @@
       els.trendOverTimeChart.innerHTML = `
         <div class="month-chart-grid" role="img" aria-label="Historic trend over time by month in ${escapeAttr(metricLabel)}">
           ${data.map(item => {
-            const height = `${Math.max(2, (item.value / maxValue) * 100)}%`;
+            const height = metric === "percent"
+              ? `${Math.max(2, Math.min(100, item.value))}%`
+              : `${Math.max(2, (item.value / maxValue) * 100)}%`;
             const displayValue = metric === "percent"
               ? `${(Math.round(item.value * 10) / 10).toFixed(1)}%`
               : formatHours(item.value);
@@ -3672,14 +3691,42 @@
     }
 
     function reopenMultiFilter(scope, key, options = {}) {
-      window.requestAnimationFrame(() => {
-        const details = document.querySelector(`details[data-filter-details="true"][data-filter-scope="${CSS.escape(scope)}"][data-filter-key="${CSS.escape(key)}"]`);
+      const selector = `details[data-filter-details="true"][data-filter-scope="${scope}"][data-filter-key="${key}"]`;
+      const reopen = () => {
+        const details = document.querySelector(selector);
         if (!details) return;
         details.open = true;
         if (!options.focusSearch) return;
         const search = details.querySelector("[data-filter-search]");
         if (search) search.focus();
+      };
+      window.requestAnimationFrame(() => {
+        reopen();
+        window.setTimeout(reopen, 0);
+        window.setTimeout(reopen, 40);
       });
+    }
+
+    function clearTrendFilters({ includeBillable = false } = {}) {
+      els.trendFrom.value = "";
+      els.trendTo.value = "";
+      els.trendSearch.value = "";
+      if (els.trendExcludeHolidays) els.trendExcludeHolidays.checked = false;
+      uiState.filterSelections.trends.project = [];
+      uiState.filterSelections.trends.timecode = [];
+      uiState.filterSelections.trends.tag = [];
+      uiState.filterSearch.trends.project = "";
+      uiState.filterSearch.trends.timecode = "";
+      uiState.filterSearch.trends.tag = "";
+      uiState.filterOpen.trends.project = false;
+      uiState.filterOpen.trends.timecode = false;
+      uiState.filterOpen.trends.tag = false;
+      if (includeBillable) {
+        uiState.filterSelections.billable.project = [];
+        uiState.filterSearch.billable.project = "";
+        uiState.filterOpen.billable.project = false;
+      }
+      render();
     }
 
     function getPairsForProjects(pairs, projects) {
