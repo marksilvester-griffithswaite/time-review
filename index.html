@@ -5,39 +5,40 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Time Review Hub</title>
   <style>
+    @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap");
+
     :root {
       color-scheme: light;
-      --bg: #f5efe6;
-      --bg-strong: #ebe1d3;
-      --panel: rgba(255, 251, 245, 0.88);
-      --panel-strong: #fff8f0;
-      --text: #182032;
-      --muted: #6d7283;
-      --border: rgba(24, 32, 50, 0.12);
-      --border-strong: rgba(24, 32, 50, 0.24);
-      --accent: #e66a2c;
-      --accent-dark: #c6551d;
-      --review: #bd5a28;
-      --review-bg: #fff0e4;
-      --historic: #18686f;
-      --historic-bg: #ebf7f5;
-      --soft: #f8f1e8;
-      --danger: #aa3d2a;
-      --danger-bg: #fff0ed;
-      --shadow: 0 20px 40px rgba(76, 56, 38, 0.08);
-      --hero-shadow: 0 22px 48px rgba(85, 61, 34, 0.1);
+      --bg: #f6f8fb;
+      --bg-strong: #eef2f7;
+      --panel: rgba(255, 255, 255, 0.96);
+      --panel-strong: #ffffff;
+      --text: #0f1728;
+      --muted: #677090;
+      --border: rgba(103, 112, 144, 0.22);
+      --border-strong: rgba(103, 112, 144, 0.34);
+      --accent: #434bea;
+      --accent-dark: #3138bf;
+      --review: #434bea;
+      --review-bg: #edf0ff;
+      --historic: #0f1728;
+      --historic-bg: #eef2f7;
+      --soft: #f3f6fb;
+      --danger: #a33c4e;
+      --danger-bg: #fff1f4;
+      --shadow: 0 20px 48px rgba(15, 23, 40, 0.08);
+      --hero-shadow: 0 24px 56px rgba(15, 23, 40, 0.08);
     }
 
     * { box-sizing: border-box; }
 
     body {
       margin: 0;
-      font-family: "Avenir Next", "Segoe UI", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: "Montserrat", "Avenir Next", "Segoe UI", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       background: var(--bg);
       background-image:
-        radial-gradient(circle at top left, rgba(230, 106, 44, 0.1), transparent 28%),
-        radial-gradient(circle at top right, rgba(24, 104, 111, 0.08), transparent 24%),
-        linear-gradient(180deg, #fbf6ef 0%, var(--bg) 42%, #f3ebdf 100%);
+        radial-gradient(circle at top left, rgba(67, 75, 234, 0.08), transparent 26%),
+        linear-gradient(180deg, #ffffff 0%, var(--bg) 32%, #f4f7fb 100%);
       color: var(--text);
       line-height: 1.5;
     }
@@ -64,14 +65,13 @@
       gap: 18px;
       align-items: end;
       background:
-        linear-gradient(135deg, rgba(255, 247, 238, 0.92), rgba(255, 250, 244, 0.88)),
-        radial-gradient(circle at top right, rgba(230, 106, 44, 0.12), transparent 40%);
-      border: 1px solid rgba(24, 32, 50, 0.1);
+        linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 253, 0.96)),
+        radial-gradient(circle at top right, rgba(67, 75, 234, 0.08), transparent 40%);
+      border: 1px solid rgba(103, 112, 144, 0.18);
       border-radius: 30px;
-      padding: 24px 26px;
+      padding: 28px 30px;
       margin-bottom: 16px;
       box-shadow: var(--hero-shadow);
-      backdrop-filter: blur(10px);
     }
 
     .app-kicker {
@@ -80,8 +80,8 @@
       gap: 8px;
       padding: 7px 12px;
       border-radius: 999px;
-      background: rgba(230, 106, 44, 0.12);
-      color: var(--accent-dark);
+      background: rgba(67, 75, 234, 0.08);
+      color: #434a6b;
       font-size: 0.8rem;
       font-weight: 800;
       letter-spacing: 0.08em;
@@ -109,8 +109,8 @@
       gap: 14px;
       padding: 18px;
       border-radius: 24px;
-      background: rgba(24, 32, 50, 0.04);
-      border: 1px solid rgba(24, 32, 50, 0.08);
+      background: linear-gradient(180deg, rgba(247, 249, 252, 0.96), rgba(241, 245, 250, 0.96));
+      border: 1px solid rgba(103, 112, 144, 0.18);
     }
 
     .app-note strong {
@@ -164,7 +164,7 @@
       font-weight: 800;
       cursor: pointer;
       letter-spacing: -0.02em;
-      box-shadow: 0 14px 24px rgba(230, 106, 44, 0.24);
+      box-shadow: 0 14px 28px rgba(67, 75, 234, 0.2);
     }
 
     button:hover { background: var(--accent-dark); }
@@ -471,6 +471,62 @@
     .chart-bars {
       display: grid;
       gap: 12px;
+    }
+
+    .month-chart {
+      display: grid;
+      gap: 12px;
+    }
+
+    .month-chart-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+      gap: 12px;
+      align-items: end;
+      min-height: 320px;
+      padding: 20px 0 4px;
+    }
+
+    .month-bar {
+      display: grid;
+      gap: 8px;
+      align-items: end;
+      justify-items: center;
+      min-height: 320px;
+    }
+
+    .month-bar-value {
+      font-size: 0.82rem;
+      font-weight: 760;
+      color: var(--text);
+      text-align: center;
+    }
+
+    .month-bar-track {
+      width: 100%;
+      max-width: 56px;
+      height: 220px;
+      border-radius: 18px;
+      background: #eef2f7;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: end;
+      overflow: hidden;
+    }
+
+    .month-bar-fill {
+      width: 100%;
+      border-radius: 14px 14px 0 0;
+      background: linear-gradient(180deg, #6971ff 0%, #434bea 100%);
+      min-height: 4px;
+    }
+
+    .month-bar-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.2;
     }
 
     .chart-row {
@@ -894,13 +950,13 @@
   <main>
     <section class="app-hero" aria-label="Application brand">
       <div>
-        <span class="app-kicker">Platform discipline</span>
+        <span class="app-kicker">Griffiths Waite</span>
         <h1 class="app-title">Time Review Hub</h1>
-        <p class="app-lead">Review current submissions, maintain shared historic records, and explore the shape of your time with a calmer, more editorial workflow.</p>
+        <p class="app-lead">Review current submissions, keep historic records tidy, and explore time trends in one place with a cleaner Griffiths Waite-inspired interface.</p>
       </div>
       <aside class="app-note">
-        <strong>Built for deliberate review</strong>
-        <p>Tags stay optional, historic rules remain shareable, and trends stay close to the same filtered data you use for actual review.</p>
+        <strong>Designed for practical review</strong>
+        <p>Tags stay optional, shared history remains usable, and trends stay close to the same filtered data you use for day-to-day review.</p>
       </aside>
     </section>
 
@@ -1096,6 +1152,7 @@
 
         <div class="subview-switcher" aria-label="Trend views">
           <button class="subview-pill active" data-trend-subview="all" type="button">All</button>
+          <button class="subview-pill" data-trend-subview="overtime" type="button">Over time</button>
           <button class="subview-pill" data-trend-subview="billable" type="button">Billable %</button>
         </div>
 
@@ -1127,6 +1184,10 @@
             </div>
             <label class="wide">Search trends
               <input id="trendSearch" type="text" placeholder="Search project, timecode, comment, tag or source CSV" />
+            </label>
+            <label>
+              <span class="filter-title">Exclude holidays</span>
+              <input id="trendExcludeHolidays" type="checkbox" />
             </label>
           </div>
         </section>
@@ -1160,6 +1221,23 @@
           <div id="trendChart" class="chart-bars"></div>
         </section>
 
+        <section id="trendOverTimePanel" class="trend-panel">
+          <div class="chart-controls">
+            <label>Metric
+              <select id="trendTimeMetric">
+                <option value="hours">Hours</option>
+                <option value="percent">% of filtered total</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="chart-summary">
+            <span id="trendOverTimeRangeLabel">No historic data loaded.</span>
+          </div>
+
+          <div id="trendOverTimeChart" class="month-chart"></div>
+        </section>
+
         <section id="trendBillablePanel" class="trend-panel">
           <section class="card stack">
             <div class="row between">
@@ -1173,10 +1251,6 @@
                 <div class="filter-title">Non-billable projects</div>
                 <div id="billableProjectFilter"></div>
               </div>
-              <label>
-                <span class="filter-title">Exclude holidays</span>
-                <input id="billableExcludeHolidays" type="checkbox" />
-              </label>
             </div>
           </section>
 
@@ -1240,6 +1314,11 @@
         historic: { project: "", timecode: "", tag: "" },
         trends: { project: "", timecode: "", tag: "" },
         billable: { project: "" }
+      },
+      filterOpen: {
+        historic: { project: false, timecode: false, tag: false },
+        trends: { project: false, timecode: false, tag: false },
+        billable: { project: false }
       }
     };
     let currentDirectoryHandle = null;
@@ -1301,14 +1380,18 @@
       trendSearch: document.getElementById("trendSearch"),
       trendGroupBy: document.getElementById("trendGroupBy"),
       trendMetric: document.getElementById("trendMetric"),
+      trendTimeMetric: document.getElementById("trendTimeMetric"),
       trendSortBy: document.getElementById("trendSortBy"),
       trendRangeLabel: document.getElementById("trendRangeLabel"),
       trendChart: document.getElementById("trendChart"),
       trendSubviewButtons: Array.from(document.querySelectorAll("[data-trend-subview]")),
       trendAllPanel: document.getElementById("trendAllPanel"),
+      trendOverTimePanel: document.getElementById("trendOverTimePanel"),
       trendBillablePanel: document.getElementById("trendBillablePanel"),
+      trendOverTimeRangeLabel: document.getElementById("trendOverTimeRangeLabel"),
+      trendOverTimeChart: document.getElementById("trendOverTimeChart"),
+      trendExcludeHolidays: document.getElementById("trendExcludeHolidays"),
       billableProjectFilter: document.getElementById("billableProjectFilter"),
-      billableExcludeHolidays: document.getElementById("billableExcludeHolidays"),
       billablePercent: document.getElementById("billablePercent"),
       billableHours: document.getElementById("billableHours"),
       nonBillableHours: document.getElementById("nonBillableHours"),
@@ -1376,10 +1459,19 @@
       render();
     });
 
+    document.addEventListener("toggle", event => {
+      const details = event.target.closest("details[data-filter-details]");
+      if (!details || event.target !== details) return;
+      const scope = details.dataset.filterScope;
+      const key = details.dataset.filterKey;
+      if (!uiState.filterOpen[scope] || !(key in uiState.filterOpen[scope])) return;
+      uiState.filterOpen[scope][key] = details.open;
+    });
+
     document.addEventListener("click", event => {
       const subviewButton = event.target.closest("[data-trend-subview]");
       if (!subviewButton) return;
-      state.activeTrendSubview = ["all", "billable"].includes(subviewButton.dataset.trendSubview)
+      state.activeTrendSubview = ["all", "overtime", "billable"].includes(subviewButton.dataset.trendSubview)
         ? subviewButton.dataset.trendSubview
         : "all";
       saveState();
@@ -1390,7 +1482,7 @@
       els.pendingSearch, els.pendingProjectFilter, els.pendingTimecodeFilter, els.pendingTagFilter,
       els.historicFrom, els.historicTo, els.historicProjectFilter, els.historicTimecodeFilter, els.historicTagFilter, els.historicSearch,
       els.trendFrom, els.trendTo, els.trendProjectFilter, els.trendTimecodeFilter, els.trendTagFilter, els.trendSearch,
-      els.trendGroupBy, els.trendMetric, els.trendSortBy, els.billableExcludeHolidays
+      els.trendGroupBy, els.trendMetric, els.trendTimeMetric, els.trendSortBy, els.trendExcludeHolidays
     ].forEach(el => {
       el.addEventListener("input", render);
       el.addEventListener("change", render);
@@ -2252,6 +2344,8 @@
       const historicDateRange = getDateRange(historicFiltersActive ? filteredHistoric : historicPairs);
       const trendDateRange = getDateRange(trendFiltersActive ? filteredTrends : historicPairs);
       const trendPairsForView = trendFiltersActive ? filteredTrends : historicPairs;
+      const trendPairsForCharts = filterTrendHolidayPairs(trendPairsForView);
+      const trendChartDateRange = getDateRange(trendPairsForCharts);
 
       els.reviewBadge.textContent = String(state.pendingEntries.length);
       els.historicBadge.textContent = String(state.historicEntries.length);
@@ -2262,7 +2356,10 @@
       els.historicFilteredCount.textContent = String(filteredHistoric.length);
       els.historicEarliestDate.textContent = historicDateRange.earliest;
       els.historicLatestDate.textContent = historicDateRange.latest;
-      els.trendRangeLabel.textContent = `${trendPairsForView.length} row${trendPairsForView.length === 1 ? "" : "s"} from ${trendDateRange.earliest} to ${trendDateRange.latest}.`;
+      els.trendRangeLabel.textContent = `${trendPairsForCharts.length} row${trendPairsForCharts.length === 1 ? "" : "s"} from ${trendChartDateRange.earliest} to ${trendChartDateRange.latest}.${els.trendExcludeHolidays && els.trendExcludeHolidays.checked ? " Holidays excluded." : ""}`;
+      if (els.trendOverTimeRangeLabel) {
+        els.trendOverTimeRangeLabel.textContent = `${trendPairsForCharts.length} row${trendPairsForCharts.length === 1 ? "" : "s"} from ${trendChartDateRange.earliest} to ${trendChartDateRange.latest}.${els.trendExcludeHolidays && els.trendExcludeHolidays.checked ? " Holidays excluded." : ""}`;
+      }
 
       const summary = state.lastImportSummary || {};
       els.skippedHistoricCount.textContent = String(summary.skippedHistoric || 0);
@@ -2288,8 +2385,9 @@
         emptyFiltered: "No historic rows match these filters."
       });
 
-      renderTrendChart(trendPairsForView);
-      renderBillableView(trendPairsForView);
+      renderTrendChart(trendPairsForCharts);
+      renderTrendOverTimeChart(trendPairsForCharts);
+      renderBillableView(trendPairsForCharts);
       renderTrendSubview();
 
       updateFolderStatus();
@@ -2593,6 +2691,44 @@
         .slice(0, 20);
     }
 
+    function getMonthKey(dateText) {
+      const normalized = toDateInputValue(dateText);
+      return normalized ? normalized.slice(0, 7) : "";
+    }
+
+    function formatMonthLabel(monthKey) {
+      if (!monthKey || !/^\d{4}-\d{2}$/.test(monthKey)) return monthKey || "Unknown";
+      const [year, month] = monthKey.split("-").map(Number);
+      return new Date(Date.UTC(year, month - 1, 1)).toLocaleDateString("en-GB", {
+        month: "short",
+        year: "2-digit",
+        timeZone: "UTC"
+      });
+    }
+
+    function buildMonthlyTrendData(pairs, metric) {
+      const totalHours = Math.max(pairs.reduce((sum, { entry }) => sum + getEntryHours(entry), 0), 0);
+      const groups = new Map();
+      pairs.forEach(({ entry }) => {
+        const key = getMonthKey(entry.Date);
+        if (!key) return;
+        if (!groups.has(key)) groups.set(key, { monthKey: key, label: formatMonthLabel(key), hours: 0 });
+        groups.get(key).hours += getEntryHours(entry);
+      });
+
+      return Array.from(groups.values())
+        .sort((a, b) => a.monthKey.localeCompare(b.monthKey))
+        .map(item => ({
+          ...item,
+          value: metric === "percent" ? (totalHours ? (item.hours / totalHours) * 100 : 0) : item.hours
+        }));
+    }
+
+    function filterTrendHolidayPairs(pairs) {
+      if (!els.trendExcludeHolidays || !els.trendExcludeHolidays.checked) return pairs;
+      return pairs.filter(({ assignment }) => !hasTag(assignment, "#holiday"));
+    }
+
     function renderTrendChart(pairs) {
       if (!els.trendChart || !els.trendRangeLabel) return;
 
@@ -2625,6 +2761,44 @@
       }).join("") || `<div class="card empty">No ${escapeHtml(metricLabel)} to chart.</div>`;
     }
 
+    function renderTrendOverTimeChart(pairs) {
+      if (!els.trendOverTimeChart || !els.trendOverTimeRangeLabel) return;
+
+      if (!pairs.length) {
+        els.trendOverTimeChart.innerHTML = `<div class="card empty">No historic data available for the over-time chart.</div>`;
+        return;
+      }
+
+      const metric = els.trendTimeMetric.value || "hours";
+      const data = buildMonthlyTrendData(pairs, metric);
+      if (!data.length) {
+        els.trendOverTimeChart.innerHTML = `<div class="card empty">No dated historic rows are available for the over-time chart.</div>`;
+        return;
+      }
+
+      const maxValue = Math.max(...data.map(item => item.value), 1);
+      const metricLabel = metric === "percent" ? "percentage of filtered total" : "hours";
+      els.trendOverTimeChart.innerHTML = `
+        <div class="month-chart-grid" role="img" aria-label="Historic trend over time by month in ${escapeAttr(metricLabel)}">
+          ${data.map(item => {
+            const height = `${Math.max(2, (item.value / maxValue) * 100)}%`;
+            const displayValue = metric === "percent"
+              ? `${(Math.round(item.value * 10) / 10).toFixed(1)}%`
+              : formatHours(item.value);
+            return `
+              <div class="month-bar">
+                <div class="month-bar-value">${escapeHtml(metric === "percent" ? displayValue : `${displayValue}h`)}</div>
+                <div class="month-bar-track">
+                  <div class="month-bar-fill" style="height: ${escapeAttr(height)}" title="${escapeAttr(`${item.label}: ${metric === "percent" ? displayValue : `${displayValue} hours`}`)}"></div>
+                </div>
+                <div class="month-bar-label">${escapeHtml(item.label)}</div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      `;
+    }
+
     function hasTag(assignment, tag) {
       const clean = cleanTag(tag);
       return assignment.tags.some(item => cleanTag(item) === clean);
@@ -2639,15 +2813,11 @@
       return Array.from(options).sort((a, b) => a.localeCompare(b));
     }
 
-    function computeBillableBreakdown(pairs, nonBillableProjects, excludeHolidays) {
-      const filteredPairs = excludeHolidays
-        ? pairs.filter(({ assignment }) => !hasTag(assignment, "#holiday"))
-        : pairs;
-
+    function computeBillableBreakdown(pairs, nonBillableProjects) {
       let billableHours = 0;
       let nonBillableHours = 0;
 
-      filteredPairs.forEach(({ entry, assignment }) => {
+      pairs.forEach(({ entry, assignment }) => {
         const hours = getEntryHours(entry);
         const projectName = normalize(assignment.group || entry["Project Name"]);
         if (nonBillableProjects.includes(projectName)) nonBillableHours += hours;
@@ -2658,12 +2828,12 @@
       const billablePercent = totalHours ? (billableHours / totalHours) * 100 : 0;
 
       return {
-        pairCount: filteredPairs.length,
+        pairCount: pairs.length,
         totalHours,
         billableHours,
         nonBillableHours,
         billablePercent,
-        excludedHolidayRows: pairs.length - filteredPairs.length
+        excludedHolidayRows: 0
       };
     }
 
@@ -2673,6 +2843,7 @@
         button.classList.toggle("active", button.dataset.trendSubview === active);
       });
       if (els.trendAllPanel) els.trendAllPanel.classList.toggle("active", active === "all");
+      if (els.trendOverTimePanel) els.trendOverTimePanel.classList.toggle("active", active === "overtime");
       if (els.trendBillablePanel) els.trendBillablePanel.classList.toggle("active", active === "billable");
     }
 
@@ -2692,11 +2863,7 @@
         emptyMessage: "No matching projects."
       });
 
-      const breakdown = computeBillableBreakdown(
-        pairs,
-        selectedProjects,
-        Boolean(els.billableExcludeHolidays && els.billableExcludeHolidays.checked)
-      );
+      const breakdown = computeBillableBreakdown(pairs, selectedProjects);
 
       const billablePercentText = `${(Math.round(breakdown.billablePercent * 10) / 10).toFixed(1)}%`;
       const nonBillablePercent = breakdown.totalHours ? 100 - breakdown.billablePercent : 0;
@@ -2707,7 +2874,7 @@
       els.nonBillableHours.textContent = formatHours(breakdown.nonBillableHours);
       els.billableConsideredHours.textContent = formatHours(breakdown.totalHours);
       els.billableSummaryLabel.textContent = breakdown.pairCount
-        ? `${breakdown.pairCount} row${breakdown.pairCount === 1 ? "" : "s"} considered.${breakdown.excludedHolidayRows ? ` ${breakdown.excludedHolidayRows} holiday row${breakdown.excludedHolidayRows === 1 ? "" : "s"} excluded.` : ""}`
+        ? `${breakdown.pairCount} row${breakdown.pairCount === 1 ? "" : "s"} considered.${els.trendExcludeHolidays && els.trendExcludeHolidays.checked ? " Holidays excluded." : ""}`
         : "No historic rows available for billable analysis.";
       els.billableBarValue.textContent = `${formatHours(breakdown.billableHours)} hours · ${billablePercentText}`;
       els.nonBillableBarValue.textContent = `${formatHours(breakdown.nonBillableHours)} hours · ${nonBillablePercentText}`;
@@ -3476,6 +3643,10 @@
       return uiState.filterSearch[scope] || { project: "", timecode: "", tag: "" };
     }
 
+    function getScopedOpen(scope) {
+      return uiState.filterOpen[scope] || { project: false, timecode: false, tag: false };
+    }
+
     function getPairsForProjects(pairs, projects) {
       if (!projects.length) return [];
       return filterPairs(pairs, { project: projects });
@@ -3497,6 +3668,7 @@
       const summaryText = selectedValues.length
         ? (selectedValues.length <= 2 ? selectedValues.join(", ") : `${selectedValues.length} selected`)
         : "Any";
+      const openState = Boolean(getScopedOpen(scope)[key]);
 
       if (disabled) {
         container.innerHTML = `
@@ -3510,7 +3682,13 @@
       }
 
       container.innerHTML = `
-        <details class="multi-filter">
+        <details
+          class="multi-filter"
+          data-filter-details="true"
+          data-filter-scope="${escapeAttr(scope)}"
+          data-filter-key="${escapeAttr(key)}"
+          ${openState ? "open" : ""}
+        >
           <summary>
             <span>${escapeHtml(summaryText)}</span>
             <span class="multi-filter-hint">${selectedValues.length ? `${selectedValues.length} selected` : "Select one or many"}</span>
