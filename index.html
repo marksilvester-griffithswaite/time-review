@@ -1162,7 +1162,7 @@
 
         <div class="subview-switcher" aria-label="Trend views">
           <button class="subview-pill active" data-trend-subview="all" type="button">All</button>
-          <button class="subview-pill" data-trend-subview="overtime" type="button">Over time</button>
+          <button class="subview-pill" data-trend-subview="overtime" type="button">Month by month</button>
           <button class="subview-pill" data-trend-subview="billable" type="button">Billable %</button>
         </div>
 
@@ -1522,9 +1522,9 @@
     });
 
     [
-      els.pendingSearch, els.pendingProjectFilter, els.pendingTimecodeFilter, els.pendingTagFilter,
-      els.historicFrom, els.historicTo, els.historicProjectFilter, els.historicTimecodeFilter, els.historicTagFilter, els.historicSearch,
-      els.trendFrom, els.trendTo, els.trendProjectFilter, els.trendTimecodeFilter, els.trendTagFilter, els.trendSearch,
+      els.pendingSearch,
+      els.historicFrom, els.historicTo, els.historicSearch,
+      els.trendFrom, els.trendTo, els.trendSearch,
       els.trendGroupBy, els.trendMetric, els.trendTimeMetric, els.trendSortBy, els.trendExcludeHolidays
     ].forEach(el => {
       el.addEventListener("input", render);
