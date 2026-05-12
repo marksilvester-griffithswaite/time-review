@@ -3,52 +3,129 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Time Recording Assessor</title>
+  <title>Time Review Hub</title>
   <style>
     :root {
       color-scheme: light;
-      --bg: #f4f6f8;
-      --panel: #ffffff;
-      --text: #172033;
-      --muted: #687386;
-      --border: #d9e0ea;
-      --border-strong: #aeb9c8;
-      --accent: #2563eb;
-      --accent-dark: #1d4ed8;
-      --review: #b45309;
-      --review-bg: #fff7ed;
-      --historic: #047857;
-      --historic-bg: #ecfdf5;
-      --soft: #f8fafc;
-      --danger: #b91c1c;
-      --danger-bg: #fef2f2;
-      --shadow: 0 14px 36px rgba(15, 23, 42, 0.08);
+      --bg: #f5efe6;
+      --bg-strong: #ebe1d3;
+      --panel: rgba(255, 251, 245, 0.88);
+      --panel-strong: #fff8f0;
+      --text: #182032;
+      --muted: #6d7283;
+      --border: rgba(24, 32, 50, 0.12);
+      --border-strong: rgba(24, 32, 50, 0.24);
+      --accent: #e66a2c;
+      --accent-dark: #c6551d;
+      --review: #bd5a28;
+      --review-bg: #fff0e4;
+      --historic: #18686f;
+      --historic-bg: #ebf7f5;
+      --soft: #f8f1e8;
+      --danger: #aa3d2a;
+      --danger-bg: #fff0ed;
+      --shadow: 0 20px 40px rgba(76, 56, 38, 0.08);
+      --hero-shadow: 0 22px 48px rgba(85, 61, 34, 0.1);
     }
 
     * { box-sizing: border-box; }
 
     body {
       margin: 0;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: "Avenir Next", "Segoe UI", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       background: var(--bg);
+      background-image:
+        radial-gradient(circle at top left, rgba(230, 106, 44, 0.1), transparent 28%),
+        radial-gradient(circle at top right, rgba(24, 104, 111, 0.08), transparent 24%),
+        linear-gradient(180deg, #fbf6ef 0%, var(--bg) 42%, #f3ebdf 100%);
       color: var(--text);
-      line-height: 1.45;
+      line-height: 1.5;
     }
 
     main {
       width: min(1580px, 100%);
       margin: 0 auto;
-      padding: 16px 22px 22px;
+      padding: 18px 22px 28px;
     }
 
     h2, h3 {
       margin: 0 0 12px;
-      letter-spacing: -0.025em;
+      letter-spacing: -0.04em;
+      line-height: 1.08;
     }
 
-    h2 { font-size: 1.25rem; }
-    h3 { font-size: 1rem; }
+    h2 { font-size: 1.38rem; }
+    h3 { font-size: 1.02rem; }
     p { margin: 0 0 10px; }
+
+    .app-hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.9fr);
+      gap: 18px;
+      align-items: end;
+      background:
+        linear-gradient(135deg, rgba(255, 247, 238, 0.92), rgba(255, 250, 244, 0.88)),
+        radial-gradient(circle at top right, rgba(230, 106, 44, 0.12), transparent 40%);
+      border: 1px solid rgba(24, 32, 50, 0.1);
+      border-radius: 30px;
+      padding: 24px 26px;
+      margin-bottom: 16px;
+      box-shadow: var(--hero-shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .app-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: rgba(230, 106, 44, 0.12);
+      color: var(--accent-dark);
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .app-title {
+      margin: 0 0 12px;
+      font-size: clamp(2.2rem, 5vw, 4.1rem);
+      letter-spacing: -0.065em;
+      line-height: 0.92;
+    }
+
+    .app-lead {
+      max-width: 820px;
+      color: var(--muted);
+      font-size: 1.02rem;
+    }
+
+    .app-note {
+      align-self: stretch;
+      display: grid;
+      align-content: space-between;
+      gap: 14px;
+      padding: 18px;
+      border-radius: 24px;
+      background: rgba(24, 32, 50, 0.04);
+      border: 1px solid rgba(24, 32, 50, 0.08);
+    }
+
+    .app-note strong {
+      font-size: 1rem;
+      letter-spacing: -0.03em;
+    }
+
+    .app-note p {
+      color: var(--muted);
+      margin: 0;
+    }
+
+    @media (max-width: 980px) {
+      .app-hero { grid-template-columns: 1fr; }
+    }
 
     label {
       display: grid;
@@ -62,26 +139,32 @@
     input, select, textarea {
       width: 100%;
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 10px 11px;
-      background: white;
+      border-radius: 16px;
+      padding: 11px 12px;
+      background: rgba(255, 255, 255, 0.92);
       color: var(--text);
     }
 
     input:focus, select:focus, textarea:focus {
-      outline: 3px solid rgba(37, 99, 235, 0.18);
+      outline: 3px solid rgba(230, 106, 44, 0.16);
       border-color: var(--accent);
+    }
+
+    input[type="checkbox"] {
+      width: auto;
+      accent-color: var(--accent);
     }
 
     button {
       border: 0;
-      border-radius: 12px;
-      padding: 10px 14px;
+      border-radius: 16px;
+      padding: 11px 16px;
       background: var(--accent);
       color: white;
-      font-weight: 750;
+      font-weight: 800;
       cursor: pointer;
-      box-shadow: 0 8px 18px rgba(37, 99, 235, 0.22);
+      letter-spacing: -0.02em;
+      box-shadow: 0 14px 24px rgba(230, 106, 44, 0.24);
     }
 
     button:hover { background: var(--accent-dark); }
@@ -89,7 +172,7 @@
 
     button.secondary {
       color: var(--text);
-      background: white;
+      background: rgba(255, 255, 255, 0.85);
       border: 1px solid var(--border);
       box-shadow: none;
     }
@@ -114,9 +197,10 @@
     .card {
       background: var(--panel);
       border: 1px solid var(--border);
-      border-radius: 20px;
+      border-radius: 28px;
       box-shadow: var(--shadow);
-      padding: 18px;
+      padding: 20px;
+      backdrop-filter: blur(12px);
     }
 
     .stack { display: grid; gap: 16px; }
@@ -132,23 +216,24 @@
       gap: 10px;
       align-items: center;
       flex-wrap: wrap;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
     }
 
     .step-button {
       text-align: left;
       color: var(--text);
-      background: white;
+      background: rgba(255, 255, 255, 0.72);
       border: 1px solid var(--border);
       box-shadow: none;
-      padding: 10px 14px;
+      padding: 11px 16px;
       display: inline-flex;
       gap: 8px;
       min-height: 0;
       align-items: center;
+      border-radius: 999px;
     }
 
-    .step-button:hover { background: white; border-color: var(--border-strong); }
+    .step-button:hover { background: rgba(255, 255, 255, 0.92); border-color: var(--border-strong); }
 
     .step-button strong {
       display: inline-flex;
@@ -175,7 +260,7 @@
 
     .step-button.active[data-view-target="trends"] {
       border-color: var(--accent);
-      background: #eff6ff;
+      background: rgba(230, 106, 44, 0.11);
     }
 
     .badge {
@@ -186,14 +271,14 @@
       height: 1.7rem;
       padding: 0 8px;
       border-radius: 999px;
-      background: #e5e7eb;
+      background: rgba(24, 32, 50, 0.08);
       color: #111827;
       font-size: 0.82rem;
       font-weight: 800;
     }
 
-    .badge.review { background: #fed7aa; color: #7c2d12; }
-    .badge.historic { background: #a7f3d0; color: #064e3b; }
+    .badge.review { background: #ffd8bf; color: #8c4018; }
+    .badge.historic { background: #cdece8; color: #0f555a; }
 
     .view-panel { display: none; gap: 16px; }
     .view-panel.active { display: grid; }
@@ -201,22 +286,22 @@
     .notice {
       border-radius: 14px;
       padding: 12px;
-      background: #eff6ff;
-      border: 1px solid #bfdbfe;
-      color: #1e3a8a;
+      background: #fff5eb;
+      border: 1px solid rgba(230, 106, 44, 0.22);
+      color: #9b4a1f;
       font-weight: 650;
     }
 
     .notice.warn {
-      background: #fffbeb;
-      border-color: #fde68a;
+      background: #fff7eb;
+      border-color: #f6cf95;
       color: #92400e;
     }
 
     .notice.success {
-      background: #ecfdf5;
-      border-color: #86efac;
-      color: #065f46;
+      background: #edf9f6;
+      border-color: #9ed8cf;
+      color: #13555b;
     }
 
     .two-column {
@@ -277,6 +362,102 @@
       align-items: end;
     }
 
+    .subview-switcher {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .subview-pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 8px 14px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.7);
+      color: var(--text);
+      font-weight: 750;
+    }
+
+    .subview-pill.active {
+      background: rgba(230, 106, 44, 0.12);
+      border-color: rgba(230, 106, 44, 0.28);
+      color: var(--accent-dark);
+    }
+
+    button.subview-pill {
+      cursor: pointer;
+      box-shadow: none;
+      background: rgba(255, 255, 255, 0.7);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 8px 14px;
+    }
+
+    button.subview-pill.active {
+      background: rgba(230, 106, 44, 0.12);
+      color: var(--accent-dark);
+      border-color: rgba(230, 106, 44, 0.28);
+    }
+
+    .trend-panel { display: none; }
+    .trend-panel.active { display: grid; gap: 16px; }
+
+    .billable-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .billable-split {
+      display: grid;
+      gap: 12px;
+    }
+
+    .billable-bar {
+      display: grid;
+      gap: 8px;
+    }
+
+    .billable-bar-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: baseline;
+      flex-wrap: wrap;
+    }
+
+    .billable-label {
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .billable-track {
+      height: 20px;
+      border-radius: 999px;
+      background: #efe3d2;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .billable-fill {
+      height: 100%;
+      border-radius: 999px;
+    }
+
+    .billable-fill.billable {
+      background: linear-gradient(90deg, #18686f, #47a6a2);
+    }
+
+    .billable-fill.nonbillable {
+      background: linear-gradient(90deg, #e66a2c, #f2a15b);
+    }
+
+    @media (max-width: 900px) {
+      .billable-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
     .chart-controls label { min-width: 180px; }
 
     .chart-summary {
@@ -309,7 +490,7 @@
       position: relative;
       height: 18px;
       border-radius: 999px;
-      background: #e5eef9;
+      background: #efe3d2;
       overflow: hidden;
     }
 
@@ -317,7 +498,7 @@
       position: absolute;
       inset: 0 auto 0 0;
       border-radius: 999px;
-      background: linear-gradient(90deg, #2563eb, #38bdf8);
+      background: linear-gradient(90deg, #e66a2c, #f2a15b);
     }
 
     .chart-value {
@@ -363,9 +544,9 @@
 
     .mini-stat {
       border: 1px solid var(--border);
-      background: var(--soft);
-      border-radius: 16px;
-      padding: 12px;
+      background: rgba(255, 255, 255, 0.62);
+      border-radius: 22px;
+      padding: 14px;
     }
 
     .mini-stat strong {
@@ -389,6 +570,95 @@
 
     .filters label { flex: 1 1 180px; }
 
+    .filter-field {
+      flex: 1 1 220px;
+      min-width: 220px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .filter-title {
+      font-weight: 650;
+      color: #374151;
+    }
+
+    .multi-filter {
+      position: relative;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: white;
+      min-height: 44px;
+    }
+
+    .multi-filter[open] {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(230, 106, 44, 0.12);
+    }
+
+    .multi-filter summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 10px 11px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      color: var(--text);
+    }
+
+    .multi-filter summary::-webkit-details-marker { display: none; }
+
+    .multi-filter.disabled {
+      background: #f8fafc;
+      color: var(--muted);
+    }
+
+    .multi-filter.disabled summary {
+      cursor: not-allowed;
+      color: var(--muted);
+    }
+
+    .multi-filter-panel {
+      border-top: 1px solid var(--border);
+      padding: 10px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .multi-filter-search {
+      width: 100%;
+    }
+
+    .multi-filter-options {
+      display: grid;
+      gap: 6px;
+      max-height: 220px;
+      overflow: auto;
+    }
+
+    .multi-filter-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .multi-filter-option input {
+      width: auto;
+      margin: 0;
+    }
+
+    .multi-filter-empty {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .multi-filter-hint {
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
     .rule-list { display: grid; gap: 8px; }
 
     .rule {
@@ -398,16 +668,16 @@
       align-items: center;
       padding: 8px;
       border: 1px solid var(--border);
-      border-radius: 14px;
-      background: var(--soft);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.65);
     }
 
     .tag-pill {
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      background: #e0e7ff;
-      color: #3730a3;
+      background: rgba(230, 106, 44, 0.12);
+      color: #8a421d;
       border-radius: 999px;
       padding: 3px 8px;
       font-weight: 750;
@@ -427,9 +697,9 @@
       display: inline-flex;
       gap: 5px;
       align-items: center;
-      border: 1px solid #bfdbfe;
-      background: #eff6ff;
-      color: #1e3a8a;
+      border: 1px solid rgba(24, 104, 111, 0.2);
+      background: rgba(24, 104, 111, 0.1);
+      color: #13555b;
       border-radius: 999px;
       padding: 3px 6px 3px 8px;
       font-size: 0.82rem;
@@ -446,8 +716,8 @@
 
     .suggestion-chip button.dismiss {
       background: white;
-      color: #1e3a8a;
-      border: 1px solid #bfdbfe;
+      color: #13555b;
+      border: 1px solid rgba(24, 104, 111, 0.2);
     }
 
     .status-pill {
@@ -460,17 +730,17 @@
       white-space: nowrap;
     }
 
-    .status-pill.default { background: #f3f4f6; color: #374151; }
-    .status-pill.rule { background: #dbeafe; color: #1e40af; }
-    .status-pill.stored { background: #dcfce7; color: #166534; }
-    .status-pill.unmapped { background: #fef3c7; color: #92400e; }
-    .status-pill.review { background: #ffedd5; color: #9a3412; }
-    .status-pill.historic { background: #dcfce7; color: #166534; }
+    .status-pill.default { background: rgba(24, 32, 50, 0.06); color: #374151; }
+    .status-pill.rule { background: rgba(230, 106, 44, 0.13); color: #9a461d; }
+    .status-pill.stored { background: rgba(24, 104, 111, 0.13); color: #13555b; }
+    .status-pill.unmapped { background: #fff1dd; color: #9a5418; }
+    .status-pill.review { background: #ffe3cf; color: #9a461d; }
+    .status-pill.historic { background: #dff2ef; color: #13555b; }
 
     .group {
       border: 1px solid var(--border);
-      border-radius: 18px;
-      background: white;
+      border-radius: 24px;
+      background: rgba(255, 251, 246, 0.84);
       overflow: hidden;
       box-shadow: var(--shadow);
     }
@@ -485,7 +755,7 @@
       justify-content: space-between;
       gap: 14px;
       padding: 15px 18px;
-      background: var(--soft);
+      background: rgba(24, 32, 50, 0.035);
       border-bottom: 1px solid var(--border);
     }
 
@@ -519,7 +789,7 @@
 
     .subgroup {
       border-top: 1px solid var(--border);
-      background: #fcfdff;
+      background: rgba(255, 253, 249, 0.75);
     }
 
     .subgroup summary {
@@ -530,7 +800,7 @@
       justify-content: space-between;
       gap: 14px;
       padding: 12px 18px;
-      background: #f8fafc;
+      background: rgba(24, 32, 50, 0.03);
       border-bottom: 1px solid var(--border);
     }
 
@@ -550,7 +820,7 @@
     }
 
     .status-pill.ready { background: #f3f4f6; color: #374151; }
-    .status-pill.progress { background: #dbeafe; color: #1d4ed8; }
+    .status-pill.progress { background: rgba(230, 106, 44, 0.14); color: #9a461d; }
     .status-pill.done { background: #dcfce7; color: #166534; }
 
     .tag-editor {
@@ -594,14 +864,14 @@
       position: sticky;
       top: 0;
       z-index: 1;
-      background: white;
-      color: #374151;
+      background: rgba(255, 248, 240, 0.96);
+      color: #4b5565;
       font-size: 0.8rem;
       text-transform: uppercase;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.08em;
     }
 
-    tbody tr:hover { background: #f8fafc; }
+    tbody tr:hover { background: rgba(230, 106, 44, 0.045); }
     td.project { min-width: 240px; }
     td.hours { min-width: 90px; white-space: nowrap; }
     td.timecode { min-width: 170px; }
@@ -622,6 +892,18 @@
 </head>
 <body>
   <main>
+    <section class="app-hero" aria-label="Application brand">
+      <div>
+        <span class="app-kicker">Platform discipline</span>
+        <h1 class="app-title">Time Review Hub</h1>
+        <p class="app-lead">Review current submissions, maintain shared historic records, and explore the shape of your time with a calmer, more editorial workflow.</p>
+      </div>
+      <aside class="app-note">
+        <strong>Built for deliberate review</strong>
+        <p>Tags stay optional, historic rules remain shareable, and trends stay close to the same filtered data you use for actual review.</p>
+      </aside>
+    </section>
+
     <section class="step-switcher" aria-label="App steps">
       <button class="step-button active" data-view-target="review" type="button">
         <strong>Current review <span id="reviewBadge" class="badge review">0</span></strong>
@@ -770,15 +1052,18 @@
               <label>To
                 <input id="historicTo" type="date" />
               </label>
-              <label>Project or group
-                <select id="historicProjectFilter"></select>
-              </label>
-              <label>Timecode
-                <select id="historicTimecodeFilter"></select>
-              </label>
-              <label>Tag
-                <select id="historicTagFilter"></select>
-              </label>
+              <div class="filter-field">
+                <div class="filter-title">Project or group</div>
+                <div id="historicProjectFilter"></div>
+              </div>
+              <div class="filter-field">
+                <div class="filter-title">Timecode</div>
+                <div id="historicTimecodeFilter"></div>
+              </div>
+              <div class="filter-field">
+                <div class="filter-title">Tag</div>
+                <div id="historicTagFilter"></div>
+              </div>
               <label class="wide">Search historic time
                 <input id="historicSearch" type="text" placeholder="Search project, timecode, comment, tag or source CSV" />
               </label>
@@ -804,32 +1089,128 @@
         <div class="row between">
           <div>
             <h2 id="trendsTitle">Historic trends</h2>
-            <p class="muted">Visualise the historic review data as a bar chart. The same historic filters apply here too.</p>
+            <p class="muted">Visualise the historic review data as a bar chart.</p>
           </div>
           <span class="status-pill historic">Based on historic review data</span>
         </div>
 
-        <div class="chart-controls">
-          <label>Group by
-            <select id="trendGroupBy">
-              <option value="project">Project</option>
-              <option value="timecode">Timecode</option>
-              <option value="month">Month</option>
-            </select>
-          </label>
-          <label>Metric
-            <select id="trendMetric">
-              <option value="hours">Hours</option>
-              <option value="rows">Rows</option>
-            </select>
-          </label>
+        <div class="subview-switcher" aria-label="Trend views">
+          <button class="subview-pill active" data-trend-subview="all" type="button">All</button>
+          <button class="subview-pill" data-trend-subview="billable" type="button">Billable %</button>
         </div>
 
-        <div class="chart-summary">
-          <span id="trendRangeLabel">No historic data loaded.</span>
-        </div>
+        <section class="card stack">
+          <div class="row between">
+            <div>
+              <h3>Trend filters</h3>
+              <p class="muted">Use the same filters as Historic review, but just for the chart.</p>
+            </div>
+          </div>
+          <div class="filters">
+            <label>From
+              <input id="trendFrom" type="date" />
+            </label>
+            <label>To
+              <input id="trendTo" type="date" />
+            </label>
+            <div class="filter-field">
+              <div class="filter-title">Project or group</div>
+              <div id="trendProjectFilter"></div>
+            </div>
+            <div class="filter-field">
+              <div class="filter-title">Timecode</div>
+              <div id="trendTimecodeFilter"></div>
+            </div>
+            <div class="filter-field">
+              <div class="filter-title">Tag</div>
+              <div id="trendTagFilter"></div>
+            </div>
+            <label class="wide">Search trends
+              <input id="trendSearch" type="text" placeholder="Search project, timecode, comment, tag or source CSV" />
+            </label>
+          </div>
+        </section>
 
-        <div id="trendChart" class="chart-bars"></div>
+        <section id="trendAllPanel" class="trend-panel active">
+          <div class="chart-controls">
+            <label>Group by
+              <select id="trendGroupBy">
+                <option value="project">Project</option>
+                <option value="timecode">Timecode</option>
+              </select>
+            </label>
+            <label>Metric
+              <select id="trendMetric">
+                <option value="hours">Hours</option>
+                <option value="percent">% of filtered total</option>
+              </select>
+            </label>
+            <label>Sort by
+              <select id="trendSortBy">
+                <option value="numeric">Highest value</option>
+                <option value="alphabetical">A to Z</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="chart-summary">
+            <span id="trendRangeLabel">No historic data loaded.</span>
+          </div>
+
+          <div id="trendChart" class="chart-bars"></div>
+        </section>
+
+        <section id="trendBillablePanel" class="trend-panel">
+          <section class="card stack">
+            <div class="row between">
+              <div>
+                <h3>Billable settings</h3>
+                <p class="muted">Choose which projects count as non-billable inside the already-filtered trends dataset.</p>
+              </div>
+            </div>
+            <div class="filters">
+              <div class="filter-field">
+                <div class="filter-title">Non-billable projects</div>
+                <div id="billableProjectFilter"></div>
+              </div>
+              <label>
+                <span class="filter-title">Exclude holidays</span>
+                <input id="billableExcludeHolidays" type="checkbox" />
+              </label>
+            </div>
+          </section>
+
+          <section class="billable-grid">
+            <div class="mini-stat"><strong id="billablePercent">0%</strong><span>billable %</span></div>
+            <div class="mini-stat"><strong id="billableHours">0</strong><span>billable hours</span></div>
+            <div class="mini-stat"><strong id="nonBillableHours">0</strong><span>non-billable hours</span></div>
+            <div class="mini-stat"><strong id="billableConsideredHours">0</strong><span>hours considered</span></div>
+          </section>
+
+          <section class="card billable-split">
+            <div class="chart-summary">
+              <span id="billableSummaryLabel">No historic data loaded.</span>
+            </div>
+            <div class="billable-bar">
+              <div class="billable-bar-head">
+                <span class="billable-label">Billable</span>
+                <span id="billableBarValue" class="chart-value">0 hours · 0%</span>
+              </div>
+              <div class="billable-track">
+                <div id="billableBarFill" class="billable-fill billable" style="width: 0%"></div>
+              </div>
+            </div>
+            <div class="billable-bar">
+              <div class="billable-bar-head">
+                <span class="billable-label">Non-billable</span>
+                <span id="nonBillableBarValue" class="chart-value">0 hours · 0%</span>
+              </div>
+              <div class="billable-track">
+                <div id="nonBillableBarFill" class="billable-fill nonbillable" style="width: 0%"></div>
+              </div>
+            </div>
+          </section>
+        </section>
       </section>
     </section>
   </main>
@@ -849,6 +1230,18 @@
     ];
 
     const state = loadState();
+    const uiState = {
+      filterSelections: {
+        historic: { project: [], timecode: [], tag: [] },
+        trends: { project: [], timecode: [], tag: [] },
+        billable: { project: [] }
+      },
+      filterSearch: {
+        historic: { project: "", timecode: "", tag: "" },
+        trends: { project: "", timecode: "", tag: "" },
+        billable: { project: "" }
+      }
+    };
     let currentDirectoryHandle = null;
 
     const els = {
@@ -900,10 +1293,31 @@
       historicFilteredCount: document.getElementById("historicFilteredCount"),
       historicEarliestDate: document.getElementById("historicEarliestDate"),
       historicLatestDate: document.getElementById("historicLatestDate"),
+      trendFrom: document.getElementById("trendFrom"),
+      trendTo: document.getElementById("trendTo"),
+      trendProjectFilter: document.getElementById("trendProjectFilter"),
+      trendTimecodeFilter: document.getElementById("trendTimecodeFilter"),
+      trendTagFilter: document.getElementById("trendTagFilter"),
+      trendSearch: document.getElementById("trendSearch"),
       trendGroupBy: document.getElementById("trendGroupBy"),
       trendMetric: document.getElementById("trendMetric"),
+      trendSortBy: document.getElementById("trendSortBy"),
       trendRangeLabel: document.getElementById("trendRangeLabel"),
       trendChart: document.getElementById("trendChart"),
+      trendSubviewButtons: Array.from(document.querySelectorAll("[data-trend-subview]")),
+      trendAllPanel: document.getElementById("trendAllPanel"),
+      trendBillablePanel: document.getElementById("trendBillablePanel"),
+      billableProjectFilter: document.getElementById("billableProjectFilter"),
+      billableExcludeHolidays: document.getElementById("billableExcludeHolidays"),
+      billablePercent: document.getElementById("billablePercent"),
+      billableHours: document.getElementById("billableHours"),
+      nonBillableHours: document.getElementById("nonBillableHours"),
+      billableConsideredHours: document.getElementById("billableConsideredHours"),
+      billableSummaryLabel: document.getElementById("billableSummaryLabel"),
+      billableBarValue: document.getElementById("billableBarValue"),
+      nonBillableBarValue: document.getElementById("nonBillableBarValue"),
+      billableBarFill: document.getElementById("billableBarFill"),
+      nonBillableBarFill: document.getElementById("nonBillableBarFill"),
       viewButtons: Array.from(document.querySelectorAll("[data-view-target]")),
       viewPanels: {
         review: document.getElementById("reviewView"),
@@ -932,10 +1346,51 @@
       button.addEventListener("click", () => switchView(button.dataset.viewTarget));
     });
 
+    document.addEventListener("input", event => {
+      const searchInput = event.target.closest("[data-filter-search]");
+      if (!searchInput) return;
+      const scope = searchInput.dataset.filterScope;
+      const key = searchInput.dataset.filterKey;
+      if (!uiState.filterSearch[scope] || !(key in uiState.filterSearch[scope])) return;
+      uiState.filterSearch[scope][key] = searchInput.value;
+      render();
+    });
+
+    document.addEventListener("change", event => {
+      const optionInput = event.target.closest("[data-filter-option]");
+      if (!optionInput) return;
+      const scope = optionInput.dataset.filterScope;
+      const key = optionInput.dataset.filterKey;
+      const value = optionInput.dataset.filterValue;
+      if (!uiState.filterSelections[scope] || !Array.isArray(uiState.filterSelections[scope][key])) return;
+      const current = new Set(uiState.filterSelections[scope][key]);
+      if (optionInput.checked) current.add(value);
+      else current.delete(value);
+      uiState.filterSelections[scope][key] = Array.from(current).sort((a, b) => a.localeCompare(b));
+      if (key === "project" && !uiState.filterSelections[scope].project.length) {
+        uiState.filterSelections[scope].timecode = [];
+        uiState.filterSelections[scope].tag = [];
+        uiState.filterSearch[scope].timecode = "";
+        uiState.filterSearch[scope].tag = "";
+      }
+      render();
+    });
+
+    document.addEventListener("click", event => {
+      const subviewButton = event.target.closest("[data-trend-subview]");
+      if (!subviewButton) return;
+      state.activeTrendSubview = ["all", "billable"].includes(subviewButton.dataset.trendSubview)
+        ? subviewButton.dataset.trendSubview
+        : "all";
+      saveState();
+      render();
+    });
+
     [
       els.pendingSearch, els.pendingProjectFilter, els.pendingTimecodeFilter, els.pendingTagFilter,
       els.historicFrom, els.historicTo, els.historicProjectFilter, els.historicTimecodeFilter, els.historicTagFilter, els.historicSearch,
-      els.trendGroupBy, els.trendMetric
+      els.trendFrom, els.trendTo, els.trendProjectFilter, els.trendTimecodeFilter, els.trendTagFilter, els.trendSearch,
+      els.trendGroupBy, els.trendMetric, els.trendSortBy, els.billableExcludeHolidays
     ].forEach(el => {
       el.addEventListener("input", render);
       el.addEventListener("change", render);
@@ -965,6 +1420,42 @@
     });
 
     els.pendingGroups.addEventListener("click", event => {
+      const bulkTagProjectButton = event.target.closest("[data-bulk-tag-project]");
+      if (bulkTagProjectButton) {
+        const key = bulkTagProjectButton.dataset.bulkTagProject;
+        const tag = cleanTag(window.prompt("Add this optional tag to every row in the project group:", ""));
+        if (!tag) return;
+        state.pendingEntries.forEach(entry => {
+          if (getProjectReviewKey(entry) !== key) return;
+          if (addTagToEntry(entry, tag)) entry.__reviewed = true;
+        });
+        saveState();
+        render();
+        return;
+      }
+
+      const markProjectReviewedButton = event.target.closest("[data-mark-project-reviewed]");
+      if (markProjectReviewedButton) {
+        const key = markProjectReviewedButton.dataset.markProjectReviewed;
+        state.pendingEntries.forEach(entry => {
+          if (getProjectReviewKey(entry) === key) entry.__reviewed = true;
+        });
+        saveState();
+        render();
+        return;
+      }
+
+      const resetProjectReviewedButton = event.target.closest("[data-reset-project-reviewed]");
+      if (resetProjectReviewedButton) {
+        const key = resetProjectReviewedButton.dataset.resetProjectReviewed;
+        state.pendingEntries.forEach(entry => {
+          if (getProjectReviewKey(entry) === key) entry.__reviewed = false;
+        });
+        saveState();
+        render();
+        return;
+      }
+
       const bulkTagButton = event.target.closest("[data-bulk-tag-timecode]");
       if (bulkTagButton) {
         const key = bulkTagButton.dataset.bulkTagTimecode;
@@ -1060,7 +1551,8 @@
         lastRulesFileSave: "",
         tagRules: [],
         suggestionRules: [],
-        activeView: "review"
+        activeView: "review",
+        activeTrendSubview: "all"
       };
 
       const raw = localStorage.getItem(STORAGE_KEY) || LEGACY_KEYS.map(key => localStorage.getItem(key)).find(Boolean);
@@ -1077,6 +1569,7 @@
         loaded.pendingEntries = loaded.pendingEntries.map(ensureEntryId);
         loaded.historicEntries = loaded.historicEntries.map(ensureEntryId);
         loaded.activeView = ["review", "historic", "trends"].includes(loaded.activeView) ? loaded.activeView : "review";
+        loaded.activeTrendSubview = ["all", "billable"].includes(loaded.activeTrendSubview) ? loaded.activeTrendSubview : "all";
         return loaded;
       } catch (error) {
         console.warn("Unable to load saved state", error);
@@ -1335,8 +1828,12 @@
       return hashString(JSON.stringify(payload));
     }
 
+    function getProjectReviewKey(entry, assignment = null) {
+      return normalize((assignment && assignment.group) || entry.__storedAssignedGroup || entry["Project Name"] || "No project");
+    }
+
     function getReviewGroupKey(entry, assignment = null) {
-      const groupName = normalize((assignment && assignment.group) || entry.__storedAssignedGroup || entry["Project Name"] || "No project");
+      const groupName = getProjectReviewKey(entry, assignment);
       const timecode = normalize(entry["Timecode Name"]) || "No timecode";
       return `${groupName}||${timecode}`;
     }
@@ -1590,9 +2087,9 @@
 
     function filterPairs(pairs, filter) {
       const query = String(filter.search || "").trim().toLowerCase();
-      const project = filter.project || "";
-      const timecode = filter.timecode || "";
-      const tag = filter.tag || "";
+      const projectValues = Array.isArray(filter.project) ? filter.project.filter(Boolean) : (filter.project ? [filter.project] : []);
+      const timecodeValues = Array.isArray(filter.timecode) ? filter.timecode.filter(Boolean) : (filter.timecode ? [filter.timecode] : []);
+      const tagValues = Array.isArray(filter.tag) ? filter.tag.filter(Boolean) : (filter.tag ? [filter.tag] : []);
       const from = filter.from || "";
       const to = filter.to || "";
 
@@ -1601,13 +2098,13 @@
         if (from && (!date || date < from)) return false;
         if (to && (!date || date > to)) return false;
 
-        if (project) {
+        if (projectValues.length) {
           const originalProject = normalize(entry["Project Name"]);
-          if (originalProject !== project && assignment.group !== project) return false;
+          if (!projectValues.includes(originalProject) && !projectValues.includes(assignment.group)) return false;
         }
 
-        if (timecode && normalize(entry["Timecode Name"]) !== timecode) return false;
-        if (tag && !assignment.tags.includes(tag)) return false;
+        if (timecodeValues.length && !timecodeValues.includes(normalize(entry["Timecode Name"]))) return false;
+        if (tagValues.length && !assignment.tags.some(tag => tagValues.includes(tag))) return false;
         if (!query) return true;
 
         const haystack = [
@@ -1631,34 +2128,130 @@
         tag: els.pendingTagFilter.value
       });
 
+      const historicSelections = getScopedSelections("historic");
+      const trendSelections = getScopedSelections("trends");
+
+      populateSelect(els.pendingProjectFilter, "All projects and groups", getProjectAndGroupOptions(pendingPairs), els.pendingProjectFilter.value);
+      populateSelect(els.pendingTimecodeFilter, "All timecodes", getTimecodeOptions(pendingPairs), els.pendingTimecodeFilter.value);
+      populateSelect(els.pendingTagFilter, "All tags", getTagOptions(pendingPairs), els.pendingTagFilter.value);
+
+      const historicProjectOptions = getProjectAndGroupOptions(historicPairs);
+      clampSelectionsToOptions("historic", "project", historicProjectOptions);
+      const historicTimecodePairs = getPairsForProjects(historicPairs, historicSelections.project);
+      const historicTimecodeOptions = historicSelections.project.length ? getTimecodeOptions(historicTimecodePairs) : [];
+      clampSelectionsToOptions("historic", "timecode", historicTimecodeOptions);
+      const historicTagPairs = getPairsForProjectsAndTimecodes(historicPairs, historicSelections.project, historicSelections.timecode);
+      const historicTagOptions = historicSelections.project.length ? getTagOptions(historicSelections.timecode.length ? historicTagPairs : historicTimecodePairs) : [];
+      clampSelectionsToOptions("historic", "tag", historicTagOptions);
+
+      const trendProjectOptions = getProjectAndGroupOptions(historicPairs);
+      clampSelectionsToOptions("trends", "project", trendProjectOptions);
+      const trendTimecodePairs = getPairsForProjects(historicPairs, trendSelections.project);
+      const trendTimecodeOptions = trendSelections.project.length ? getTimecodeOptions(trendTimecodePairs) : [];
+      clampSelectionsToOptions("trends", "timecode", trendTimecodeOptions);
+      const trendTagPairs = getPairsForProjectsAndTimecodes(historicPairs, trendSelections.project, trendSelections.timecode);
+      const trendTagOptions = trendSelections.project.length ? getTagOptions(trendSelections.timecode.length ? trendTagPairs : trendTimecodePairs) : [];
+      clampSelectionsToOptions("trends", "tag", trendTagOptions);
+
+      renderMultiFilter(els.historicProjectFilter, {
+        scope: "historic",
+        key: "project",
+        options: historicProjectOptions,
+        selectedValues: historicSelections.project,
+        searchValue: getScopedSearch("historic").project,
+        disabled: false,
+        emptyMessage: "No matching projects."
+      });
+      renderMultiFilter(els.historicTimecodeFilter, {
+        scope: "historic",
+        key: "timecode",
+        options: historicTimecodeOptions,
+        selectedValues: historicSelections.timecode,
+        searchValue: getScopedSearch("historic").timecode,
+        disabled: !historicSelections.project.length,
+        disabledMessage: "Select one or more projects first",
+        emptyMessage: "No matching timecodes."
+      });
+      renderMultiFilter(els.historicTagFilter, {
+        scope: "historic",
+        key: "tag",
+        options: historicTagOptions,
+        selectedValues: historicSelections.tag,
+        searchValue: getScopedSearch("historic").tag,
+        disabled: !historicSelections.project.length,
+        disabledMessage: "Select one or more projects first",
+        emptyMessage: "No matching tags."
+      });
+
+      renderMultiFilter(els.trendProjectFilter, {
+        scope: "trends",
+        key: "project",
+        options: trendProjectOptions,
+        selectedValues: trendSelections.project,
+        searchValue: getScopedSearch("trends").project,
+        disabled: false,
+        emptyMessage: "No matching projects."
+      });
+      renderMultiFilter(els.trendTimecodeFilter, {
+        scope: "trends",
+        key: "timecode",
+        options: trendTimecodeOptions,
+        selectedValues: trendSelections.timecode,
+        searchValue: getScopedSearch("trends").timecode,
+        disabled: !trendSelections.project.length,
+        disabledMessage: "Select one or more projects first",
+        emptyMessage: "No matching timecodes."
+      });
+      renderMultiFilter(els.trendTagFilter, {
+        scope: "trends",
+        key: "tag",
+        options: trendTagOptions,
+        selectedValues: trendSelections.tag,
+        searchValue: getScopedSearch("trends").tag,
+        disabled: !trendSelections.project.length,
+        disabledMessage: "Select one or more projects first",
+        emptyMessage: "No matching tags."
+      });
+
       const filteredHistoric = filterPairs(historicPairs, {
         search: els.historicSearch.value,
         from: els.historicFrom.value,
         to: els.historicTo.value,
-        project: els.historicProjectFilter.value,
-        timecode: els.historicTimecodeFilter.value,
-        tag: els.historicTagFilter.value
+        project: historicSelections.project,
+        timecode: historicSelections.timecode,
+        tag: historicSelections.tag
+      });
+      const filteredTrends = filterPairs(historicPairs, {
+        search: els.trendSearch.value,
+        from: els.trendFrom.value,
+        to: els.trendTo.value,
+        project: trendSelections.project,
+        timecode: trendSelections.timecode,
+        tag: trendSelections.tag
       });
       const historicFiltersActive = Boolean(
         els.historicSearch.value ||
         els.historicFrom.value ||
         els.historicTo.value ||
-        els.historicProjectFilter.value ||
-        els.historicTimecodeFilter.value ||
-        els.historicTagFilter.value
+        historicSelections.project.length ||
+        historicSelections.timecode.length ||
+        historicSelections.tag.length
       );
-
-      populateSelect(els.pendingProjectFilter, "All projects and groups", getProjectAndGroupOptions(pendingPairs), els.pendingProjectFilter.value);
-      populateSelect(els.pendingTimecodeFilter, "All timecodes", getTimecodeOptions(pendingPairs), els.pendingTimecodeFilter.value);
-      populateSelect(els.pendingTagFilter, "All tags", getTagOptions(pendingPairs), els.pendingTagFilter.value);
-      populateSelect(els.historicProjectFilter, "All projects and groups", getProjectAndGroupOptions(historicPairs), els.historicProjectFilter.value);
-      populateSelect(els.historicTimecodeFilter, "All timecodes", getTimecodeOptions(historicPairs), els.historicTimecodeFilter.value);
-      populateSelect(els.historicTagFilter, "All tags", getTagOptions(historicPairs), els.historicTagFilter.value);
+      const trendFiltersActive = Boolean(
+        els.trendSearch.value ||
+        els.trendFrom.value ||
+        els.trendTo.value ||
+        trendSelections.project.length ||
+        trendSelections.timecode.length ||
+        trendSelections.tag.length
+      );
 
       const pendingGroups = groupPairs(filteredPending);
       const historicGroups = groupPairs(filteredHistoric);
       const visibleSuggestionCount = getPendingSuggestionCount(filteredPending);
       const historicDateRange = getDateRange(historicFiltersActive ? filteredHistoric : historicPairs);
+      const trendDateRange = getDateRange(trendFiltersActive ? filteredTrends : historicPairs);
+      const trendPairsForView = trendFiltersActive ? filteredTrends : historicPairs;
 
       els.reviewBadge.textContent = String(state.pendingEntries.length);
       els.historicBadge.textContent = String(state.historicEntries.length);
@@ -1669,6 +2262,7 @@
       els.historicFilteredCount.textContent = String(filteredHistoric.length);
       els.historicEarliestDate.textContent = historicDateRange.earliest;
       els.historicLatestDate.textContent = historicDateRange.latest;
+      els.trendRangeLabel.textContent = `${trendPairsForView.length} row${trendPairsForView.length === 1 ? "" : "s"} from ${trendDateRange.earliest} to ${trendDateRange.latest}.`;
 
       const summary = state.lastImportSummary || {};
       els.skippedHistoricCount.textContent = String(summary.skippedHistoric || 0);
@@ -1694,7 +2288,9 @@
         emptyFiltered: "No historic rows match these filters."
       });
 
-      renderTrendChart(historicFiltersActive ? filteredHistoric : historicPairs);
+      renderTrendChart(trendPairsForView);
+      renderBillableView(trendPairsForView);
+      renderTrendSubview();
 
       updateFolderStatus();
       renderViewState();
@@ -1826,6 +2422,8 @@
       const groups = groupPairs(pairs);
       container.innerHTML = groups.map(group => {
         const completedTimecodes = group.timecodes.filter(item => item.reviewState.done).length;
+        const projectReviewState = getTimecodeReviewState(group.entries);
+        const projectReviewKey = getProjectReviewKey(group.entries[0].entry, group.entries[0].assignment);
         const reviewHeaders = `
           <th>Date</th>
           <th>Project</th>
@@ -1890,7 +2488,18 @@
                 <span class="group-name">${escapeHtml(group.name)}</span><br>
                 <span class="group-meta">${group.entries.length} row${group.entries.length === 1 ? "" : "s"} · ${formatHours(group.totalHours)} hours across ${group.timecodes.length} timecode${group.timecodes.length === 1 ? "" : "s"} · ${completedTimecodes}/${group.timecodes.length} reviewed</span>
               </span>
-              <span class="group-toggle" aria-hidden="true"></span>
+              <span class="summary-actions">
+                ${options.source === "review"
+                  ? `
+                    <span class="status-pill ${projectReviewState.statusClass}">${escapeHtml(projectReviewState.statusLabel)}</span>
+                    <button class="secondary small" data-bulk-tag-project="${escapeAttr(projectReviewKey)}" type="button">Add tag to project</button>
+                    ${projectReviewState.done
+                      ? `<button class="secondary small" data-reset-project-reviewed="${escapeAttr(projectReviewKey)}" type="button">Reset project</button>`
+                      : `<button class="small" data-mark-project-reviewed="${escapeAttr(projectReviewKey)}" type="button">Mark project reviewed</button>`}
+                  `
+                  : ""}
+                <span class="group-toggle" aria-hidden="true"></span>
+              </span>
             </summary>
             ${subgroups}
           </details>
@@ -1902,7 +2511,7 @@
       const statusClass = assignment.source === "Tag rule" ? "rule" : assignment.source === "Reviewed CSV" ? "stored" : assignment.hasUnmappedTag ? "unmapped" : "default";
       const tagsHtml = assignment.tags.length
         ? assignment.tags.map(tag => `<span class="tag-pill">${escapeHtml(tag)}</span>`).join(" ")
-        : `<span class="muted">None</span>`;
+        : (source === "historic" ? "" : `<span class="muted">None</span>`);
       const workedHours = escapeHtml(entry["Worked Hours"] || entry["Worked Time"] || "");
 
       if (source === "review") {
@@ -1958,49 +2567,52 @@
       `).join("")}</div>`;
     }
 
-    function buildTrendData(pairs, groupBy, metric) {
+    function buildTrendData(pairs, groupBy, metric, sortBy) {
       const groups = new Map();
       pairs.forEach(({ entry }) => {
         const key = groupBy === "timecode"
           ? (normalize(entry["Timecode Name"]) || "No timecode")
-          : groupBy === "month"
-            ? getMonthLabel(entry.Date)
-            : (normalize(entry["Project Name"]) || "No project");
+          : (normalize(entry["Project Name"]) || "No project");
         if (!groups.has(key)) groups.set(key, { label: key, hours: 0, rows: 0 });
         const item = groups.get(key);
         item.rows += 1;
         item.hours += getEntryHours(entry);
       });
 
+      const totalHours = Math.max(pairs.reduce((sum, { entry }) => sum + getEntryHours(entry), 0), 0);
+
       return Array.from(groups.values())
         .map(item => ({
           ...item,
-          value: metric === "rows" ? item.rows : item.hours
+          value: metric === "percent" ? (totalHours ? (item.hours / totalHours) * 100 : 0) : item.hours
         }))
-        .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label))
+        .sort((a, b) => {
+          if (sortBy === "alphabetical") return a.label.localeCompare(b.label);
+          return b.value - a.value || a.label.localeCompare(b.label);
+        })
         .slice(0, 20);
     }
 
     function renderTrendChart(pairs) {
       if (!els.trendChart || !els.trendRangeLabel) return;
 
-      const dateRange = getDateRange(pairs);
       if (!pairs.length) {
-        els.trendRangeLabel.textContent = "No historic rows match the current filters.";
         els.trendChart.innerHTML = `<div class="card empty">No historic data available for the chart.</div>`;
         return;
       }
 
       const groupBy = els.trendGroupBy.value || "project";
       const metric = els.trendMetric.value || "hours";
-      const data = buildTrendData(pairs, groupBy, metric);
+      const sortBy = els.trendSortBy.value || "numeric";
+      const data = buildTrendData(pairs, groupBy, metric, sortBy);
       const maxValue = Math.max(...data.map(item => item.value), 1);
-      const metricLabel = metric === "rows" ? "rows" : "hours";
-      els.trendRangeLabel.textContent = `${pairs.length} row${pairs.length === 1 ? "" : "s"} from ${dateRange.earliest} to ${dateRange.latest}.`;
+      const metricLabel = metric === "percent" ? "percentage of filtered total time" : "hours";
 
       els.trendChart.innerHTML = data.map(item => {
         const width = `${(item.value / maxValue) * 100}%`;
-        const displayValue = metric === "rows" ? String(item.value) : `${formatHours(item.value)} hours`;
+        const displayValue = metric === "percent"
+          ? `${(Math.round(item.value * 10) / 10).toFixed(1)}%`
+          : `${formatHours(item.value)} hours`;
         return `
           <div class="chart-row">
             <div class="chart-label">${escapeHtml(item.label)}</div>
@@ -2011,6 +2623,96 @@
           </div>
         `;
       }).join("") || `<div class="card empty">No ${escapeHtml(metricLabel)} to chart.</div>`;
+    }
+
+    function hasTag(assignment, tag) {
+      const clean = cleanTag(tag);
+      return assignment.tags.some(item => cleanTag(item) === clean);
+    }
+
+    function getBillableProjectOptions(pairs) {
+      const options = new Set();
+      pairs.forEach(({ assignment, entry }) => {
+        const value = normalize(assignment.group || entry["Project Name"]);
+        if (value) options.add(value);
+      });
+      return Array.from(options).sort((a, b) => a.localeCompare(b));
+    }
+
+    function computeBillableBreakdown(pairs, nonBillableProjects, excludeHolidays) {
+      const filteredPairs = excludeHolidays
+        ? pairs.filter(({ assignment }) => !hasTag(assignment, "#holiday"))
+        : pairs;
+
+      let billableHours = 0;
+      let nonBillableHours = 0;
+
+      filteredPairs.forEach(({ entry, assignment }) => {
+        const hours = getEntryHours(entry);
+        const projectName = normalize(assignment.group || entry["Project Name"]);
+        if (nonBillableProjects.includes(projectName)) nonBillableHours += hours;
+        else billableHours += hours;
+      });
+
+      const totalHours = billableHours + nonBillableHours;
+      const billablePercent = totalHours ? (billableHours / totalHours) * 100 : 0;
+
+      return {
+        pairCount: filteredPairs.length,
+        totalHours,
+        billableHours,
+        nonBillableHours,
+        billablePercent,
+        excludedHolidayRows: pairs.length - filteredPairs.length
+      };
+    }
+
+    function renderTrendSubview() {
+      const active = state.activeTrendSubview || "all";
+      els.trendSubviewButtons.forEach(button => {
+        button.classList.toggle("active", button.dataset.trendSubview === active);
+      });
+      if (els.trendAllPanel) els.trendAllPanel.classList.toggle("active", active === "all");
+      if (els.trendBillablePanel) els.trendBillablePanel.classList.toggle("active", active === "billable");
+    }
+
+    function renderBillableView(pairs) {
+      const options = getBillableProjectOptions(pairs);
+      clampSelectionsToOptions("billable", "project", options);
+      const selectedProjects = getScopedSelections("billable").project;
+      const searchValue = getScopedSearch("billable").project;
+
+      renderMultiFilter(els.billableProjectFilter, {
+        scope: "billable",
+        key: "project",
+        options,
+        selectedValues: selectedProjects,
+        searchValue,
+        disabled: false,
+        emptyMessage: "No matching projects."
+      });
+
+      const breakdown = computeBillableBreakdown(
+        pairs,
+        selectedProjects,
+        Boolean(els.billableExcludeHolidays && els.billableExcludeHolidays.checked)
+      );
+
+      const billablePercentText = `${(Math.round(breakdown.billablePercent * 10) / 10).toFixed(1)}%`;
+      const nonBillablePercent = breakdown.totalHours ? 100 - breakdown.billablePercent : 0;
+      const nonBillablePercentText = `${(Math.round(nonBillablePercent * 10) / 10).toFixed(1)}%`;
+
+      els.billablePercent.textContent = billablePercentText;
+      els.billableHours.textContent = formatHours(breakdown.billableHours);
+      els.nonBillableHours.textContent = formatHours(breakdown.nonBillableHours);
+      els.billableConsideredHours.textContent = formatHours(breakdown.totalHours);
+      els.billableSummaryLabel.textContent = breakdown.pairCount
+        ? `${breakdown.pairCount} row${breakdown.pairCount === 1 ? "" : "s"} considered.${breakdown.excludedHolidayRows ? ` ${breakdown.excludedHolidayRows} holiday row${breakdown.excludedHolidayRows === 1 ? "" : "s"} excluded.` : ""}`
+        : "No historic rows available for billable analysis.";
+      els.billableBarValue.textContent = `${formatHours(breakdown.billableHours)} hours · ${billablePercentText}`;
+      els.nonBillableBarValue.textContent = `${formatHours(breakdown.nonBillableHours)} hours · ${nonBillablePercentText}`;
+      els.billableBarFill.style.width = `${Math.max(0, Math.min(100, breakdown.billablePercent))}%`;
+      els.nonBillableBarFill.style.width = `${Math.max(0, Math.min(100, nonBillablePercent))}%`;
     }
 
     function renderRules() {
@@ -2766,10 +3468,83 @@
       };
     }
 
-    function getMonthLabel(value) {
-      const iso = toDateInputValue(value);
-      if (!iso) return "No date";
-      return iso.slice(0, 7);
+    function getScopedSelections(scope) {
+      return uiState.filterSelections[scope] || { project: [], timecode: [], tag: [] };
+    }
+
+    function getScopedSearch(scope) {
+      return uiState.filterSearch[scope] || { project: "", timecode: "", tag: "" };
+    }
+
+    function getPairsForProjects(pairs, projects) {
+      if (!projects.length) return [];
+      return filterPairs(pairs, { project: projects });
+    }
+
+    function getPairsForProjectsAndTimecodes(pairs, projects, timecodes) {
+      if (!projects.length) return [];
+      return filterPairs(pairs, { project: projects, timecode: timecodes });
+    }
+
+    function clampSelectionsToOptions(scope, key, options) {
+      const valid = new Set(options);
+      uiState.filterSelections[scope][key] = uiState.filterSelections[scope][key].filter(value => valid.has(value));
+    }
+
+    function renderMultiFilter(container, { scope, key, options, selectedValues, searchValue, disabled, disabledMessage, emptyMessage }) {
+      if (!container) return;
+      const visibleOptions = options.filter(option => option.toLowerCase().includes(searchValue.trim().toLowerCase()));
+      const summaryText = selectedValues.length
+        ? (selectedValues.length <= 2 ? selectedValues.join(", ") : `${selectedValues.length} selected`)
+        : "Any";
+
+      if (disabled) {
+        container.innerHTML = `
+          <details class="multi-filter disabled">
+            <summary>
+              <span>${escapeHtml(disabledMessage || "Unavailable")}</span>
+            </summary>
+          </details>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <details class="multi-filter">
+          <summary>
+            <span>${escapeHtml(summaryText)}</span>
+            <span class="multi-filter-hint">${selectedValues.length ? `${selectedValues.length} selected` : "Select one or many"}</span>
+          </summary>
+          <div class="multi-filter-panel">
+            <input
+              class="multi-filter-search"
+              data-filter-search="true"
+              data-filter-scope="${escapeAttr(scope)}"
+              data-filter-key="${escapeAttr(key)}"
+              type="text"
+              value="${escapeAttr(searchValue)}"
+              placeholder="Start typing to narrow options"
+            />
+            <div class="multi-filter-options">
+              ${visibleOptions.length
+                ? visibleOptions.map(option => `
+                    <label class="multi-filter-option">
+                      <input
+                        data-filter-option="true"
+                        data-filter-scope="${escapeAttr(scope)}"
+                        data-filter-key="${escapeAttr(key)}"
+                        data-filter-value="${escapeAttr(option)}"
+                        type="checkbox"
+                        ${selectedValues.includes(option) ? "checked" : ""}
+                      />
+                      <span>${escapeHtml(option)}</span>
+                    </label>
+                  `).join("")
+                : `<div class="multi-filter-empty">${escapeHtml(emptyMessage || "No matching options.")}</div>`}
+            </div>
+          </div>
+        </details>
+      `;
     }
 
     function escapeHtml(value) {
