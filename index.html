@@ -1451,12 +1451,13 @@
       const scope = searchInput.dataset.filterScope;
       const key = searchInput.dataset.filterKey;
       if (!uiState.filterSearch[scope] || !(key in uiState.filterSearch[scope])) return;
+      const cursorPos = searchInput.selectionStart ?? searchInput.value.length;
       uiState.filterSearch[scope][key] = searchInput.value;
       if (uiState.filterOpen[scope] && key in uiState.filterOpen[scope]) {
         uiState.filterOpen[scope][key] = true;
       }
       render();
-      reopenMultiFilter(scope, key, { focusSearch: true });
+      reopenMultiFilter(scope, key, { focusSearch: true, cursorPos });
     });
 
     document.addEventListener("change", event => {
@@ -2581,6 +2582,9 @@
           const reviewState = timecodeGroup.reviewState;
           const reviewKey = getReviewGroupKey(timecodeGroup.entries[0].entry, timecodeGroup.entries[0].assignment);
           const taggedText = reviewState.tagged ? ` · ${reviewState.tagged} tagged row${reviewState.tagged === 1 ? "" : "s"}` : "";
+          const subgroupMeta = options.source === "review"
+            ? `${timecodeGroup.entries.length} row${timecodeGroup.entries.length === 1 ? "" : "s"} · ${formatHours(timecodeGroup.totalHours)} hours${taggedText}`
+            : `${formatHours(timecodeGroup.totalHours)} hours`;
           const actionButtons = options.source === "review"
             ? `
                 <button class="secondary small" data-bulk-tag-timecode="${escapeAttr(reviewKey)}" type="button">Add tag to all</button>
@@ -2598,7 +2602,7 @@
               <summary>
                 <span>
                   <span class="subgroup-name">${escapeHtml(timecodeGroup.name)}</span><br>
-                  <span class="group-meta">${timecodeGroup.entries.length} row${timecodeGroup.entries.length === 1 ? "" : "s"} · ${formatHours(timecodeGroup.totalHours)} hours${taggedText}</span>
+                  <span class="group-meta">${subgroupMeta}</span>
                 </span>
                 <span class="summary-actions">
                   ${options.source === "review"
@@ -2620,12 +2624,16 @@
           `;
         }).join("");
 
+        const groupMeta = options.source === "review"
+          ? `${group.entries.length} row${group.entries.length === 1 ? "" : "s"} · ${formatHours(group.totalHours)} hours across ${group.timecodes.length} timecode${group.timecodes.length === 1 ? "" : "s"} · ${completedTimecodes}/${group.timecodes.length} reviewed`
+          : `${formatHours(group.totalHours)} hours`;
+
         return `
           <details class="group" open>
             <summary>
               <span>
                 <span class="group-name">${escapeHtml(group.name)}</span><br>
-                <span class="group-meta">${group.entries.length} row${group.entries.length === 1 ? "" : "s"} · ${formatHours(group.totalHours)} hours across ${group.timecodes.length} timecode${group.timecodes.length === 1 ? "" : "s"} · ${completedTimecodes}/${group.timecodes.length} reviewed</span>
+                <span class="group-meta">${groupMeta}</span>
               </span>
               <span class="summary-actions">
                 ${options.source === "review"
@@ -3712,7 +3720,11 @@
         details.open = true;
         if (!options.focusSearch) return;
         const search = details.querySelector("[data-filter-search]");
-        if (search) search.focus();
+        if (!search) return;
+        search.focus();
+        const cursorPos = typeof options.cursorPos === "number" ? options.cursorPos : search.value.length;
+        const safePos = Math.max(0, Math.min(cursorPos, search.value.length));
+        search.setSelectionRange(safePos, safePos);
       };
       window.requestAnimationFrame(() => {
         reopen();
